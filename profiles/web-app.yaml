@@ -1,0 +1,16 @@
+name: web-app
+description: Default profile for browser-facing web applications.
+risk_ceiling: R2
+skills:
+  - observe
+  - attack
+  - sqli
+  - xss
+  - ssrf
+  - csrf
+  - idor
+  - business-logic
+recon_depth: medium
+notes: >
+  Prefer read-only proofs (boolean/error/time-based). Escalate past R2 only with
+  explicit human approval recorded in the approval flow.

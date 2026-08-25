@@ -1,0 +1,29 @@
+# Canonical knowledge sources (spec: knowledge management).
+#
+# Printed verbatim by `harness knowledge status`.  This is the registry of where
+# durable, cross-program knowledge lives in this harness.
+
+canonical:
+  core_manual: AGENT_CORE.md          # single behavioral source for every runtime
+  agent_specs: agent-specs/           # 8 specialist stances (frontmatter + body)
+  skills: skills/                     # skill library; manifest.yaml is the router
+  vendor: vendor/                     # pinned curated third-party skill libraries
+  docs: docs/                         # operating + integration + security docs
+
+# Global knowledge: sanitized, program-agnostic lessons reusable across programs.
+global:
+  location: knowledge/
+  promote_from_program: harness knowledge promote <file>
+
+# Candidates awaiting human review + sanitization before promotion to global/.
+global_candidates:
+  location: knowledge/global-candidates/
+  rule: remove target domains, user data, secrets, and proprietary details first
+
+# Vendor pins (pinned at a known-good revision; see vendor/README.md).
+# Intentionally empty in this build — no third-party code is vendored until a
+# human reviews it for license + content safety.
+vendor:
+  claude-bug-bounty: vendor/claude-bug-bounty/
+  claude-red: vendor/claude-red/
+  other-curated: vendor/other-curated/

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "bughunt": {
+      "type": "local",
+      "command": [
+        "/mnt/c/Users/Lenovo/Documents/Pacil/PERKODINGAN/Cyber_Security/bug_bounty/harness",
+        "mcp",
+        "serve"
+      ],
+      "enabled": true
+    }
+  }
+}

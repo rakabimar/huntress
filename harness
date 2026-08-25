@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Portable AI Bug Hunting Harness — convenience launcher (spec §6).
+# Usage: ./harness <subcommand> ...   (equivalent to `harness <subcommand>`)
+set -euo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Prefer the project virtualenv if present; otherwise fall back to the ambient
+# interpreter (already seeded with the package during bootstrap).
+PY="${PYTHON:-python3}"
+if [ -x "$HERE/.venv/bin/python" ]; then
+  PY="$HERE/.venv/bin/python"
+fi
+
+# Put the repo root on the import path so `-m bughunt_harness.cli` resolves
+# regardless of the caller's CWD.
+export PYTHONPATH="$HERE${PYTHONPATH:+:$PYTHONPATH}"
+
+exec "$PY" -m bughunt_harness.cli "$@"

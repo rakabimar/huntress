@@ -1,0 +1,15 @@
+name: api-focused
+description: REST/GraphQL API and service-focused engagements.
+risk_ceiling: R2
+skills:
+  - api-enumeration
+  - idor
+  - authn-bypass
+  - jwt-misuse
+  - mass-assignment
+  - race-condition
+  - rate-limit-bypass
+recon_depth: deep
+notes: >
+  Enumerate the OpenAPI/Swagger or GraphQL schema first. Test object-level
+  authorization (IDOR/BOLA) and input validation before injection.

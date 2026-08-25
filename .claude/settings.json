@@ -1,0 +1,141 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./harness:*)",
+      "Bash(harness:*)",
+      "Bash(python -m bughunt_harness.cli:*)"
+    ],
+    "deny": [
+      "Read(~/.bughunt/secrets/**)",
+      "Edit(~/.bughunt/secrets/**)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.gnupg/**)",
+      "Read(~/.netrc)",
+      "Bash(sqlite3:*)",
+      "Bash(* .db *)**",
+      "Bash(git push:*)",
+      "Bash(nmap:*)",
+      "Bash(masscan:*)",
+      "Bash(sqlmap:*)",
+      "Bash(nuclei:*)",
+      "Bash(ffuf:*)",
+      "Bash(wfuzz:*)",
+      "Bash(nikto:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/mnt/c/Users/Lenovo/Documents/Pacil/PERKODINGAN/Cyber_Security/bug_bounty/harness hook session-start",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/mnt/c/Users/Lenovo/Documents/Pacil/PERKODINGAN/Cyber_Security/bug_bounty/harness hook user-prompt-submit",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/mnt/c/Users/Lenovo/Documents/Pacil/PERKODINGAN/Cyber_Security/bug_bounty/harness hook pre-tool-use",
+            "timeout": 10
+          }
+        ],
+        "matcher": "Bash"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/mnt/c/Users/Lenovo/Documents/Pacil/PERKODINGAN/Cyber_Security/bug_bounty/harness hook post-tool-use",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/mnt/c/Users/Lenovo/Documents/Pacil/PERKODINGAN/Cyber_Security/bug_bounty/harness hook post-tool-use",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/mnt/c/Users/Lenovo/Documents/Pacil/PERKODINGAN/Cyber_Security/bug_bounty/harness hook stop",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/mnt/c/Users/Lenovo/Documents/Pacil/PERKODINGAN/Cyber_Security/bug_bounty/harness hook pre-compact",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/mnt/c/Users/Lenovo/Documents/Pacil/PERKODINGAN/Cyber_Security/bug_bounty/harness hook session-end",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "filesystem": {
+      "denyWrite": [
+        "~/.bughunt/secrets/**",
+        "~/.ssh/**"
+      ]
+    },
+    "network": {
+      "allowLocalBinding": true,
+      "strictAllowlist": true,
+      "allowedDomains": [
+        "localhost",
+        "*.localhost",
+        "127.0.0.1",
+        "::1",
+        "*.test",
+        "*.invalid",
+        "*.example"
+      ],
+      "deniedDomains": []
+    }
+  }
+}

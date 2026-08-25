@@ -1,0 +1,96 @@
+# Skill router (spec §16–§17).
+#
+# Maps categories -> skills.  Each skill lives in skills/<slug>/SKILL.md and its
+# frontmatter carries the authoritative per-skill metadata (maturity,
+# risk_class, category, cwe).  This file is the *router*: it names the library
+# so the skill selector and `harness skill list/validate` can discover it, and
+# it is what `harness sync` uses to copy skills into each runtime's skill dir.
+
+categories:
+  core:
+    label: Core methodology (research loop + specialist stances)
+    skills:
+      - observe
+      - hypothesize
+      - research-loop
+      - attack
+      - defend
+      - triage
+      - validate
+      - report
+
+  injection:
+    label: Injection
+    skills:
+      - sqli
+      - nosqli
+      - command-injection
+      - xss
+      - xxe
+      - ssti
+      - ldap-injection
+      - header-injection
+
+  authnz:
+    label: Authentication & authorization
+    skills:
+      - authn-bypass
+      - jwt-misuse
+      - oauth-misuse
+      - idor
+      - privilege-escalation
+      - session-fixation
+
+  business-logic:
+    label: Business logic
+    skills:
+      - business-logic
+      - race-condition
+      - mass-assignment
+      - payment-logic
+      - workflow-bypass
+
+  file:
+    label: File handling
+    skills:
+      - file-upload
+      - path-traversal
+      - lfi
+      - unrestricted-download
+
+  web:
+    label: CSRF / SSRF / redirect
+    skills:
+      - csrf
+      - ssrf
+      - open-redirect
+
+  client-side:
+    label: Client-side
+    skills:
+      - prototype-pollution
+      - cors-misconfig
+      - postmessage
+      - websocket
+
+  infra:
+    label: Infrastructure & protocol
+    skills:
+      - subdomain-takeover
+      - request-smuggling
+      - host-header
+      - cache-poisoning
+
+  crypto-config:
+    label: Cryptography & configuration
+    skills:
+      - crypto-misuse
+      - information-disclosure
+      - insecure-deserialization
+      - rate-limit-bypass
+
+  recon:
+    label: Enumeration & fingerprinting
+    skills:
+      - recon-passive
+      - api-enumeration
