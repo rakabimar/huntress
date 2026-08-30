@@ -1,0 +1,7 @@
+name: routing-saml-sso
+input: "The SP supports two IdPs. Both controlled accounts have the same email. One assertion preview selects the same local profile, but the ACS has not issued a session."
+expected:
+  selected_skill: saml-sso
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

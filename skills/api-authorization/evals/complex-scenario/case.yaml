@@ -1,0 +1,10 @@
+name: difficult-api-authorization-scenario
+input: "A versioned async export lets account A create job J for its invoice. Account B can poll J and receives a signed download URL, but the fixture has not yet checked whether that URL returns A's protected export."
+expected:
+  route: api-authorization
+  hypothesis: "State one narrow cause-to-protected-effect claim; do not promote yet."
+  refuting_observation: "A control or authoritative postcondition disproves the boundary crossing."
+  evidence_required: true
+  tool_selection: policy_preflight
+  promote_finding: false
+  max_requests: 0

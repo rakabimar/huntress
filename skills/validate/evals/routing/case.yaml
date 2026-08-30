@@ -1,0 +1,3 @@
+name: validate-routing
+input: "A candidate passed deterministic completeness checks and now needs a separate adversarial session to test scope, intent, duplicates, and reproduction."
+expected: {selected_skill: validate, evidence_required: true, tool_selection: policy_preflight, max_requests: 0}

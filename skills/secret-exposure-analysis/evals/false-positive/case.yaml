@@ -1,0 +1,7 @@
+name: false-positive-secret-exposure-analysis
+input: "An example fixture contains a documented invalid API key and a generated public identifier. Explain why detector confidence is not credential validity."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

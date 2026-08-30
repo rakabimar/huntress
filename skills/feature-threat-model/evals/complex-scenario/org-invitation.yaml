@@ -1,0 +1,9 @@
+name: organization-invitation-threat-model
+input: "Model an organization invitation feature with owner, inviter, invitee, existing member, expired/revoked invite, email binding, role selection, acceptance, and replay states. Identify actors, assets, transitions and invariants before tests."
+expected:
+  route: feature-threat-model
+  hypothesis: "A later research hypothesis must target one invitation state transition and protected membership effect."
+  refuting_observation: "Token, recipient, organization, role, expiry and one-time-use invariants are all enforced."
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

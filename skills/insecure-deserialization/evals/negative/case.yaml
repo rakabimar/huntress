@@ -1,0 +1,8 @@
+name: negative-insecure-deserialization
+input: "A vulnerable library is installed only in test code and no untrusted entrypoint imports it."
+expected:
+  promote_finding: false
+  disposition: reject_or_inconclusive
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

@@ -1,0 +1,8 @@
+name: route-source-audit-context
+input: "Recon maps a GraphQL endpoint and the registered repository contains resolver registration. Decide which source context and authorization skills to activate without loading unrelated mobile skills."
+expected:
+  selected_skill: source-audit-context
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

@@ -1,0 +1,6 @@
+name: tool-dependency-reachability
+input: "A vulnerable API may be called through a wrapper across packages. Choose scanner, exact import/use search, symbols, CodeQL, and approved sandbox behavior test by uncertainty."
+expected:
+  tool_selection: none
+  evidence_required: true
+  max_requests: 0

@@ -1,26 +1,33 @@
 ---
 name: mass-assignment
 description: Use when endpoints bind client-supplied fields (role, is_admin, balance) or accept nested JSON/array parameters without an allowlist.
-maturity: draft
+maturity: stable
 risk_class: R2
 category: business-logic
 cwe: [915]
+canonical: true
+primary_specialist: api-authz-specialist
+related_skills: [api-authorization, access-control, business-logic, http-parameter-pollution]
+primary_triggers: [object binding, unexpected writable field, DTO serializer input]
+secondary_triggers: [nested update, protected property, owner tenant role status]
+negative_triggers: [field echoed but ignored, server recomputation, harmless extension field]
+blackbox: true
+whitebox: true
+behavioral_eval_status: fixture
 ---
 
-# Mass Assignment And Parameter Pollution
+# Mass Assignment
 
 ## Purpose
-Mass assignment happens when an endpoint blindly binds client-supplied fields onto
-an object, so a field the developer never intended to expose (role, is_admin, balance,
-owner_id) can be set by the caller. HTTP parameter pollution is its cousin: duplicated
-or conflicting parameters in queries, form bodies, or JSON arrays get merged in
-unpredictable ways. Both are privilege/binding bugs that turn harmless payloads into
-authorization or integrity failures.
+Mass assignment happens when an endpoint binds client-supplied object properties to
+a domain model without a permitted-field boundary, allowing protected fields such as
+role, owner, tenant, approval state, or balance to change. Route duplicate-key and
+proxy/framework parsing disagreement to `http-parameter-pollution`.
 
 ## When to use
 - Endpoints accept full objects for create/update (PATCH/PUT/POST) rather than named fields.
 - Responses echo back fields that were never submitted, suggesting reflection/binding.
-- Nested JSON or arrays are accepted, and a numeric index or repeated key could alter merge.
+- Nested DTOs, serializers, ORM models, or merge helpers expose more fields than the feature intends.
 - Admin-adjacent or payment-adjacent endpoints where role, status, or balance fields exist.
 
 ## Process
@@ -30,7 +37,7 @@ authorization or integrity failures.
 3. Predict the observable if true (privilege/state change) and what would refute it
    (field ignored, 4xx response, or unchanged state).
 4. Run the MINIMAL controlled test through `send_authorized_http_request` only — never raw
-   curl/sqlmap. Send one extra field, or one duplicated/first-vs-last parameter pair.
+   curl/sqlmap. Send one protected field on a synthetic object.
 5. Compare the response and state; `complete_research_test` with the observation and a
    supports/rejects/inconclusive result.
 6. Capture `create_evidence` (request_response) for the one field that mattered; redact
@@ -46,7 +53,7 @@ authorization or integrity failures.
 - A field echoed back in the response is not proof it changed state; only a state change matters.
 - Extra fields being silently ignored means no mass assignment — confirm by reading state, not response text.
 - "Role" set but never consulted by any authorization check is not a privilege escalation.
-- Duplicate parameters returning the later value may be intended; verify the sensitive consumer.
+- A documented writable extension/metadata property is not a protected model boundary.
 
 ## Stop conditions
 - `scope_preflight` or `policy_preflight` rejects the target or action — stop immediately.

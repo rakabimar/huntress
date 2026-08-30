@@ -1,0 +1,3 @@
+name: validate-stale-client-cache
+input: "The UI displays a stale private project name after logout, but a clean session and every server request deny access and return no private content."
+expected: {promote_finding: false, evidence_required: true, tool_selection: none, max_requests: 0}

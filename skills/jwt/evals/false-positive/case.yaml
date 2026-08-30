@@ -1,0 +1,7 @@
+name: realistic-jwt-false-positive
+input: "A JWT header contains jku and kid, but the service ignores them and verifies only against a configured local key; modified tokens fail."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

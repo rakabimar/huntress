@@ -1,0 +1,9 @@
+# Expert guide
+
+Treat bundles/binaries as source data. Map route construction, request schemas, auth/signing inputs, hidden/legacy endpoints, feature gates, local validation, storage, cryptographic wrappers, anti-automation context, and WebAssembly/native boundaries. Reverse engineering supplies SourceObservations and targeted runtime hypotheses; client secrets or algorithms do not bypass server authorization by themselves. Avoid license bypass, third-party abuse, credential extraction, or executing untrusted clients outside an approved sandbox.
+
+Tool choice follows the cheapest sufficient observation: source search/read before structural analysis, structural analysis before deep dataflow, and authorized Broker/browser/local sandbox only when the hypothesis requires it. Evidence and remediation address the root trust boundary; false positives are rejected before Lead promotion.
+
+Reconstruct request normalization in order: path/query/body encoding, canonical field order, timestamp/nonce, device/app identity, key derivation/storage and signature/MAC construction. Map hidden endpoints and feature flags to release/version and server reachability. Client validation, hard-coded public constants and feature-gate visibility are intelligence, not security boundaries. WebAssembly/native wrappers may hide protocol details but do not authorize bypassing server controls.
+
+Use strings/ripgrep first, syntax/decompiler views for control flow, and a policy-approved sandbox only to run registered client code or a local protocol fixture. Convert observations into a narrowly scoped Broker hypothesis such as normalization mismatch or missing server authorization. Reject endpoints disabled server-side, values that are public identifiers, signatures bound to an unavailable secret/hardware key, and UI-only differences with correct backend enforcement.

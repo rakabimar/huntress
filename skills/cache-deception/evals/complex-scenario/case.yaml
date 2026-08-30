@@ -1,0 +1,10 @@
+name: complex-scenario-cache-deception
+input: "Account A requests /profile/me/avatar.css and receives private JSON with X-Cache miss. An anonymous request has not yet established a shared hit."
+expected:
+  route: cache-deception
+  hypothesis: "One exact boundary hypothesis; do not promote from the observation."
+  refuting_observation: "The safe/intended control or absent protected effect disproves it."
+  evidence_required: true
+  promote_finding: false
+  tool_selection: policy_preflight
+  max_requests: 0

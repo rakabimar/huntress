@@ -16,10 +16,13 @@ from ..errors import EngagementValidationError, ProgramError
 from ..registry import ProgramRecord
 from .models import (
     AccountsModel,
+    AutonomyModel,
     Engagement,
     HeadersModel,
     ProgramModel,
     ReportingModel,
+    ReconModel,
+    IntegrationsModel,
     ROEModel,
     ScopeModel,
 )
@@ -34,13 +37,22 @@ ENGAGEMENT_FILES = (
     "headers.yaml",
     "accounts.yaml",
     "reporting.yaml",
+    "autonomy.yaml",
+    "recon.yaml",
+    "integrations.yaml",
 )
+OPTIONAL_ENGAGEMENT_FILES = frozenset({"autonomy.yaml", "recon.yaml", "integrations.yaml"})
 
 WORKSPACE_SUBDIRS = (
+    "intake",
     "knowledge",
     "state",
     "checkpoints",
     "recon",
+    "source/repos",
+    "source/artifacts",
+    "source/analysis",
+    "source/indexes",
     "artifacts",
     "evidence",
     "findings",
@@ -64,6 +76,11 @@ state_changing_actions: false
 brute_force: false
 denial_of_service: false
 destructive_testing: false
+passive_recon: true
+historical_url_recon: true
+active_recon: false
+crawling: false
+bounded_scanning: false
 
 max_rps: 3.0
 max_concurrency: 1
@@ -85,6 +102,7 @@ headers:
     secret: false
     value_ref: null
     note: ""
+secret_patterns: []  # optional regular expressions redacted from artifacts
 """,
     "accounts.yaml": """\
 # Logical accounts (roles), NOT credentials.  Credentials live in the secret
@@ -94,17 +112,58 @@ accounts:
     role: regular_user
     description: ""
     secret_ref: null
+    auth: null
     enabled: true
   - id: account_b
     role: second_user
     description: ""
     secret_ref: null
+    auth: null
     enabled: true
   - id: admin_test
     role: admin
     description: ""
     secret_ref: null
+    auth: null
     enabled: false
+""",
+    "autonomy.yaml": """\
+# Autonomous hunting is opt-in and always bounded by these hard limits.
+enabled: false
+goal: validated_finding
+stop_on_validated_finding: true
+max_session_minutes: 180
+max_total_requests: 1000
+max_leads_per_session: 20
+max_leads_per_run: null  # preferred; null uses legacy max_leads_per_session
+max_hypotheses_per_lead: 8
+max_tests_per_hypothesis: 30
+max_requests_per_hypothesis: 30
+max_inconclusive_tests_per_hypothesis: 4
+max_failed_tests_per_hypothesis: 5
+max_redirects: 5
+# Deprecated and ignored; use an explicit later goal to orchestrate outputs.
+auto_prepare_outputs: false
+""",
+    "recon.yaml": """\
+# Recon freshness and deterministic interest-score overrides.
+passive_max_age_hours: 24
+light_max_age_hours: 12
+standard_max_age_hours: 24
+deep_max_age_hours: 168
+lead_threshold: 40
+interest_weights: {}
+""",
+    "integrations.yaml": """\
+# Optional per-program integration overrides. Explicit values here take
+# precedence over global config and environment variables.
+burp:
+  mcp_url: null
+  proxy_url: null
+  ca_bundle: null
+  https_interception: false
+playwright:
+  headed: true
 """,
     "reporting.yaml": """\
 # Reporting / submission preferences (platform profile is auto-detected from
@@ -220,15 +279,21 @@ def write_program_status(record: ProgramRecord) -> None:
 # Loading / saving
 # --------------------------------------------------------------------------- #
 def load_engagement(ws: Path) -> Engagement:
-    """Load and validate the five engagement files from a workspace."""
+    """Load and validate the engagement files from a workspace."""
     if not ws.is_dir():
         raise EngagementValidationError(f"workspace directory missing: {ws}")
-    missing = [f for f in ENGAGEMENT_FILES if not (ws / f).is_file()]
+    missing = [
+        f for f in ENGAGEMENT_FILES
+        if f not in OPTIONAL_ENGAGEMENT_FILES and not (ws / f).is_file()
+    ]
     if missing:
         raise EngagementValidationError(f"missing engagement files: {missing}")
 
     raw = {}
     for fname in ENGAGEMENT_FILES:
+        if not (ws / fname).is_file():
+            raw[fname] = {}
+            continue
         try:
             raw[fname] = yaml.safe_load((ws / fname).read_text(encoding="utf-8")) or {}
         except yaml.YAMLError as exc:  # type: ignore[attr-defined]
@@ -242,6 +307,9 @@ def load_engagement(ws: Path) -> Engagement:
             headers=HeadersModel.model_validate(raw["headers.yaml"]),
             accounts=AccountsModel.model_validate(raw["accounts.yaml"]),
             reporting=ReportingModel.model_validate(raw["reporting.yaml"]),
+            autonomy=AutonomyModel.model_validate(raw["autonomy.yaml"]),
+            recon=ReconModel.model_validate(raw["recon.yaml"]),
+            integrations=IntegrationsModel.model_validate(raw["integrations.yaml"]),
         )
     except Exception as exc:  # pydantic.ValidationError etc.
         raise EngagementValidationError(f"engagement validation failed: {exc}") from exc
@@ -259,10 +327,14 @@ def save_engagement(ws: Path, engagement: Engagement) -> None:
     (ws / "headers.yaml").write_text(dump(engagement.headers), encoding="utf-8")
     (ws / "accounts.yaml").write_text(dump(engagement.accounts), encoding="utf-8")
     (ws / "reporting.yaml").write_text(dump(engagement.reporting), encoding="utf-8")
+    (ws / "autonomy.yaml").write_text(dump(engagement.autonomy), encoding="utf-8")
+    (ws / "recon.yaml").write_text(dump(engagement.recon), encoding="utf-8")
+    (ws / "integrations.yaml").write_text(dump(engagement.integrations), encoding="utf-8")
 
 
 __all__ = [
     "ENGAGEMENT_FILES",
+    "OPTIONAL_ENGAGEMENT_FILES",
     "WORKSPACE_SUBDIRS",
     "slug_ok",
     "workspace_path_for",

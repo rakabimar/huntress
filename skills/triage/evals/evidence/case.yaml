@@ -1,0 +1,3 @@
+name: triage-evidence-gap
+input: "A candidate note claims account takeover but contains only a screenshot of an error banner, no session identity, durable request, or protected postcondition."
+expected: {evidence_required: true, promote_finding: false, tool_selection: none, max_requests: 0}

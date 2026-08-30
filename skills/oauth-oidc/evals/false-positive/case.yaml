@@ -1,0 +1,7 @@
+name: realistic-oauth-oidc-false-positive
+input: "The callback omits nonce in a flow that does not issue an ID token, while state and code+PKCE remain transaction-bound; no attacker outcome exists."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

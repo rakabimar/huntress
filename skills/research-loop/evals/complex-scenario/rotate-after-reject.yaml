@@ -1,0 +1,9 @@
+name: reject-and-continue
+input: "A planned admin-route hypothesis was rejected by a 403 with no content. Another ranked Lead concerns cross-account order access and the run budget remains."
+expected:
+  route: research-loop
+  hypothesis: "Form a new falsifiable hypothesis for the remaining Lead; do not revive the rejected claim."
+  refuting_observation: "The second boundary is enforced for the foreign account."
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

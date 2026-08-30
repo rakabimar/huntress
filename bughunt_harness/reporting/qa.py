@@ -60,6 +60,8 @@ def run_qa(report: "ReportData", *, finding_status: str | None = None) -> QARepo
     # Reproduction must be complete.
     if not report.steps:
         issues.append(QAIssue("fail", "missing_steps", "no steps-to-reproduce provided"))
+    if not report.prerequisites:
+        issues.append(QAIssue("fail", "missing_prerequisites", "prerequisites/account context not stated"))
     if not report.poc:
         issues.append(QAIssue("fail", "missing_poc", "no proof-of-concept provided"))
     # Impact must be supported, not asserted.
@@ -67,8 +69,16 @@ def run_qa(report: "ReportData", *, finding_status: str | None = None) -> QARepo
         issues.append(QAIssue("fail", "unsupported_impact", "impact is missing or is an unsupported bare label"))
     if not report.affected_asset:
         issues.append(QAIssue("fail", "missing_asset", "affected asset not specified"))
+    if not report.title or not report.summary:
+        issues.append(QAIssue("fail", "missing_title_or_summary", "clear title and summary are required"))
+    if not report.weakness:
+        issues.append(QAIssue("fail", "missing_weakness", "weakness/CWE classification is missing"))
+    if not report.expected_result:
+        issues.append(QAIssue("fail", "missing_expected_result", "expected result is not stated"))
     if not report.actual_result:
-        issues.append(QAIssue("warn", "missing_actual_result", "actual (observed) result not stated"))
+        issues.append(QAIssue("fail", "missing_actual_result", "actual (observed) result not stated"))
+    if not report.remediation:
+        issues.append(QAIssue("fail", "missing_remediation", "remediation guidance is missing"))
 
     # CVSS consistency.
     if report.severity and not report.cvss_vector:

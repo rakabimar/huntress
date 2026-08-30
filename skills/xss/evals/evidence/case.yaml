@@ -1,0 +1,7 @@
+name: xss-evidence-gap
+input: "A stored profile field contains markup and another test account views it, but no sink/context, CSP, DOM mutation, or execution observation is captured."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

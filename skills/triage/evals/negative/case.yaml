@@ -1,0 +1,3 @@
+name: triage-public-object
+input: "An unauthenticated object endpoint returns the same fields documented as public in the official product guide; no private fields or action are exposed."
+expected: {promote_finding: false, evidence_required: true, tool_selection: none, max_requests: 0}

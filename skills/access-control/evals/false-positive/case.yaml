@@ -1,0 +1,7 @@
+name: realistic-access-control-false-positive
+input: "A member can load a hidden admin route shell, but the backend returns a uniform denial and performs no admin action."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

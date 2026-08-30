@@ -1,0 +1,7 @@
+name: realistic-graphql-false-positive
+input: "Introspection is enabled and global node IDs are visible, but foreign nodes return null with authorization errors and no fields leak."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

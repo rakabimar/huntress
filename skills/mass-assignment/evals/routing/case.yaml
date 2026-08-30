@@ -1,0 +1,7 @@
+name: route-mass-assignment
+input: "PATCH accepts an added tenant_id and echoes it; authoritative object state is unknown."
+expected:
+  selected_skill: mass-assignment
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

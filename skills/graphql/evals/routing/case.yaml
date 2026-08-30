@@ -1,0 +1,6 @@
+name: selects-graphql
+input: "Plan a bounded test for GraphQL resolver and field authorization on https://api.example.test using configured test accounts."
+expected:
+  selected_skill: graphql
+  target_fixture_only: true
+

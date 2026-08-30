@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bughunt-harness"
-version = "0.1.0"
+version = "0.3.0"
 description = "Portable AI Bug Hunting Harness — program-isolated, hypothesis-driven, evidence-gated research operating environment"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = "MIT"
 authors = [{ name = "Bug Hunting Harness" }]
 keywords = ["bug-bounty", "security", "ai-agents", "harness", "mcp"]
 dependencies = [
@@ -22,7 +22,7 @@ dependencies = [
 [project.optional-dependencies]
 mcp = ["mcp>=1.0,<2.0"]
 cvss = ["cvss>=3.0"]
-dev = ["pytest>=8.0", "pytest-cov>=4.0"]
+dev = ["pytest>=8.0", "pytest-cov>=4.0", "build>=1.2"]
 # Full install: every optional capability + the dev/test toolchain.  Used by
 # `scripts/bootstrap.sh` so a single `pip install -e '.[full]'` gives a
 # runnable hunting environment (no `|| true` masking).
@@ -31,6 +31,10 @@ full = [
     "cvss>=3.0",
     "pytest>=8.0",
     "pytest-cov>=4.0",
+    "build>=1.2",
+    "pypdf>=6.0",
+    "tree-sitter>=0.25",
+    "tree-sitter-language-pack>=0.8",
 ]
 
 [project.scripts]
@@ -42,8 +46,17 @@ harness = "bughunt_harness.cli:main"
 where = ["."]
 include = ["bughunt_harness*"]
 
+[tool.setuptools.package-data]
+bughunt_harness = ["data/*.txt"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-q"
 filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+    "unit: hermetic tests requiring only documented Python dependencies",
+    "integration_local: local filesystem/process/loopback integration without public targets",
+    "external_tool: optional test requiring a truthfully detected external executable",
+    "model: explicit paid/configured model-runtime acceptance; never part of deterministic pytest",
+]

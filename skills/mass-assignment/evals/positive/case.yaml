@@ -1,0 +1,8 @@
+name: positive-mass-assignment
+input: "PATCH accepts an added tenant_id and echoes it; authoritative object state is unknown."
+expected:
+  route: mass-assignment
+  evidence_required: true
+  promote_finding: false
+  tool_selection: policy_preflight
+  max_requests: 0

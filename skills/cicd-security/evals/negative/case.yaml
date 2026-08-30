@@ -1,0 +1,7 @@
+name: negative-cicd-security
+input: "A release workflow references every third-party action by an immutable commit SHA and accepts no fork-controlled inputs; determine whether the configuration alone is a finding."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

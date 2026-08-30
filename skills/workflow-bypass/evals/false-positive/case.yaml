@@ -1,0 +1,7 @@
+name: false-positive-workflow-bypass
+input: "A cosmetic wizard page can be skipped but final activation rechecks every prerequisite."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

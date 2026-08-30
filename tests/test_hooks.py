@@ -73,10 +73,11 @@ def test_non_bash_tools_ignored(capsys):
     assert result is None
 
 
-def test_network_tool_but_fixture_host_allowed(capsys):
-    # A network tool whose only URL targets a reserved test TLD is permitted.
+def test_network_tool_test_tld_still_requires_broker(capsys):
+    # Reserved names are not loopback: direct target egress still requires the broker.
     result = _run(_bash("curl https://example.test/x"), capsys)
-    assert result is None
+    denied, _reason = _denied(result)
+    assert denied
 
 
 def test_session_start_without_active_program_is_silent(capsys, monkeypatch):
@@ -90,7 +91,7 @@ def test_session_start_without_active_program_is_silent(capsys, monkeypatch):
 def test_host_is_fixture():
     assert hooks._host_is_fixture("localhost")
     assert hooks._host_is_fixture("127.0.0.1")
-    assert hooks._host_is_fixture("example.test")
+    assert not hooks._host_is_fixture("example.test")
     assert not hooks._host_is_fixture("example.com")
 
 
@@ -116,3 +117,26 @@ def test_run_hook_dispatches_modern_events(monkeypatch, capsys):
     assert hooks.run_hook("pre-compact") == 0
     assert hooks.run_hook("bogus-event") == 0
     assert "unknown hook event" in capsys.readouterr().err
+
+
+def test_bound_session_a_cannot_close_session_b(db, monkeypatch):
+    from types import SimpleNamespace
+
+    a = db.start_session("claude", "orchestrator", "acme-test")
+    b = db.start_session("claude", "orchestrator", "acme-test")
+    ctx = SimpleNamespace(db=db, slug="acme-test")
+    monkeypatch.setenv("BUGHUNT_SESSION_ID", str(a.id))
+    hooks._end_session(ctx)
+    assert db.get_session(a.id).status == "ended"
+    assert db.get_session(b.id).status == "running"
+
+
+def test_stop_checkpoint_does_not_end_reusable_session(db, monkeypatch):
+    from types import SimpleNamespace
+
+    session = db.start_session("claude", "orchestrator", "acme-test")
+    ctx = SimpleNamespace(db=db, slug="acme-test")
+    monkeypatch.setenv("BUGHUNT_SESSION_ID", str(session.id))
+    hooks._checkpoint_session(ctx)
+    assert db.get_session(session.id).status == "running"
+    assert db.latest_checkpoint().session_id == session.id

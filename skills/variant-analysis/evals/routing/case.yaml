@@ -1,0 +1,8 @@
+name: route-known-fix-to-variant-analysis
+input: "Given a known security fix, determine its exact root cause and search progressively for unfixed semantic siblings in the same pinned release."
+expected:
+  selected_skill: variant-analysis
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

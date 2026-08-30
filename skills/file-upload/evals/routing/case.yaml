@@ -1,0 +1,6 @@
+name: selects-file-upload
+input: "Plan a bounded test for file upload validation, storage, retrieval, and processing on https://api.example.test using configured test accounts."
+expected:
+  selected_skill: file-upload
+  target_fixture_only: true
+

@@ -1,0 +1,7 @@
+name: realistic-api-authorization-false-positive
+input: "A batch export returns HTTP 200 for three IDs but omits the one foreign-tenant object; no protected fields, counts, or artifact for it are present."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

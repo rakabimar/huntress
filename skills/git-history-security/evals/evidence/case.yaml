@@ -1,0 +1,8 @@
+name: evidence-git-history-security
+input: "Blame shows a permissive fallback introduced during an outage and later partially reverted. Specify commit, line, rationale, current callers, release applicability and invariant evidence."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  source_runtime_correlation: required_when_hosted
+  max_requests: 0

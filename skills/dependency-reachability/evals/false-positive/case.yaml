@@ -1,0 +1,7 @@
+name: false-positive-dependency-reachability
+input: "A lockfile contains an advisory-hit parser only as a test dependency; production imports an unaffected utility module and the vulnerable feature is disabled. Reject CVE-only promotion."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

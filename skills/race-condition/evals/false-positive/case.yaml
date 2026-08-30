@@ -1,0 +1,7 @@
+name: false-positive-race-condition
+input: "Two success notifications correspond to one redemption row and one balance change."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

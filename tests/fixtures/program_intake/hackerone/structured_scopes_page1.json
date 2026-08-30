@@ -1,0 +1,1 @@
+{"data":[{"id":"101","type":"structured-scope","attributes":{"asset_identifier":"api.example.test","asset_type":"DOMAIN","eligible_for_submission":true,"eligible_for_bounty":true,"instruction":"API","max_severity":"critical"}}],"links":{"next":"https://api.hackerone.com/v1/hackers/programs/acme/structured_scopes?page[number]=2&page[size]=1"}}

@@ -1,0 +1,6 @@
+name: graphql-tool-choice
+input: "A mutation resolver source discrepancy maps to the runtime schema; one principal differential should be planned only after policy preflight."
+expected:
+  tool_selection: policy_preflight
+  evidence_required: true
+  max_requests: 0

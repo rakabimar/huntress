@@ -1,0 +1,7 @@
+name: realistic-authentication-false-positive
+input: "Password-reset requests for existing and nonexistent fixture accounts differ once, but timing varies widely and both responses reveal no stable account state."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

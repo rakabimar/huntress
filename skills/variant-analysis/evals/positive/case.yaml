@@ -1,0 +1,8 @@
+name: exact-sibling-variant
+input: "A patch moves archive-entry containment into extractZip(). One TAR import path still joins the same attacker-controlled entry name directly beneath the extraction root without the containment helper."
+expected:
+  route: variant-analysis
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

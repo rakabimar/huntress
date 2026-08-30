@@ -1,0 +1,7 @@
+name: false-positive-websocket
+input: "The upgrade is unauthenticated because it serves a documented public broadcast channel."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

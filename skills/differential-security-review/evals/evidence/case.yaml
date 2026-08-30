@@ -1,0 +1,8 @@
+name: evidence-differential-security-review
+input: "A serializer change exposes two new fields and modifies tests. Record base/target commits, changed symbols, callers, routes, invariants, applicability and evidence needed for review."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  source_runtime_correlation: required_when_hosted
+  max_requests: 0

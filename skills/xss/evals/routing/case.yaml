@@ -1,0 +1,6 @@
+name: selects-xss
+input: "Plan a bounded test for contextual output encoding and script execution on https://api.example.test using configured test accounts."
+expected:
+  selected_skill: xss
+  target_fixture_only: true
+

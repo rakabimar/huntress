@@ -1,0 +1,7 @@
+name: evidence-workflow-bypass
+input: "A final approval endpoint returns accepted when called before review; authoritative state is pending."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

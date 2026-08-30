@@ -1,0 +1,7 @@
+name: evidence-cicd-security
+input: "A local synthetic workflow log shows a fork-controlled artifact name reaching a privileged publish job. What durable source and execution evidence is required before promotion?"
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

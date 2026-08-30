@@ -1,0 +1,11 @@
+name: complex-source-dataflow-analysis
+input: "A GraphQL upload is deserialized, scanned, unpacked, and later rendered by a worker. Trace asynchronous sources, transformations, controls and multiple sinks without calling presence alone a bug."
+expected:
+  route: source-dataflow-analysis
+  hypothesis: "Create a source observation or Lead only after reachability and the security invariant are credible."
+  refuting_observation: "A guard, safe wrapper, unreachable path, fixture status, or version mismatch disproves applicability."
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  source_runtime_correlation: required_when_hosted
+  max_requests: 0

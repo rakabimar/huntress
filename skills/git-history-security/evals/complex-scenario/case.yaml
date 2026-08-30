@@ -1,0 +1,11 @@
+name: complex-git-history-security
+input: "Multiple branches contain a fix, backport, revert, and compatibility workaround for webhook verification. Reconstruct which release is exposed without assuming every security-labeled commit is exploitable."
+expected:
+  route: git-history-security
+  hypothesis: "Create a source observation or Lead only after reachability and the security invariant are credible."
+  refuting_observation: "A guard, safe wrapper, unreachable path, fixture status, or version mismatch disproves applicability."
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  source_runtime_correlation: required_when_hosted
+  max_requests: 0

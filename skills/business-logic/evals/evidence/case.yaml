@@ -1,0 +1,7 @@
+name: business-logic-evidence-gap
+input: "A refund approval references value 10, then the draft is changed to 20 before execution; only immediate responses are captured, not provider or ledger state."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

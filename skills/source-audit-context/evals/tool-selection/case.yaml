@@ -1,0 +1,6 @@
+name: tool-source-audit-context
+input: "An exact helper name is known, route decorators are unclear, and a cross-service ownership path may exist. Choose ripgrep, AST, Semgrep, or CodeQL progressively and state the escalation stop."
+expected:
+  tool_selection: none
+  evidence_required: true
+  max_requests: 0

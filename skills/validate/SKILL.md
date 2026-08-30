@@ -40,3 +40,11 @@ promoted to `validated`.
 
 ## Stop conditions
 - Any refutation succeeds → reject/kill the finding; do not paper over it.
+
+## Decision tree and tool selection
+
+If the evidence bundle is incomplete, return `inconclusive`. If a policy,
+intended-behavior, duplicate, or reproducibility refutation succeeds, kill the
+candidate. Otherwise use the role-bound independent validator launcher and
+record its structured verdict. Never use human adjudication from a researcher
+or specialist session and never validate a finding created by the same session.

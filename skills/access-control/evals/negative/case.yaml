@@ -1,0 +1,6 @@
+name: rejects-access-control-false-positive
+input: "A response looks unusual but there is no protected effect or linked evidence for horizontal, vertical, contextual, and tenant access control."
+expected:
+  promote_finding: false
+  disposition: reject_or_inconclusive
+

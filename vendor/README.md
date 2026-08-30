@@ -20,6 +20,11 @@ Then record the exact source + commit in `knowledge/sources.yaml` under
 `vendor:` and have a human review the content for **license** and **content
 safety** before use.
 
+A valid pin record contains `path`, `source`, `revision`, `license_review`, and
+`content_safety_review`. Reserved directories use
+`status: reserved_not_vendored` and `revision: null`; they are not routed into
+the canonical skill library.
+
 ## Current pins
 
 | Directory | Status |

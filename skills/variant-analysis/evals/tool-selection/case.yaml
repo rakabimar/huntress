@@ -1,0 +1,6 @@
+name: exact-pattern-first-tool-choice
+input: "The root cause identifies one exact unsafe helper call and its fixed wrapper. Search exact siblings before proposing a generalized structural rule; no runtime action is needed yet."
+expected:
+  tool_selection: none
+  evidence_required: true
+  max_requests: 0

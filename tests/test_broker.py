@@ -33,18 +33,20 @@ def _serve():
 
 def _broker(engagement, tmp_path):
     db = HuntDB(tmp_path / "state" / "hunt.db", program_slug="acme-test")
-    return RequestBroker(
+    broker = RequestBroker(
         engagement,
         program_slug="acme-test",
         workspace=tmp_path,
         hunt_db=db,
         secrets=SecretManager("acme-test"),
     )
+    broker.test_session_id = db.start_session("pytest", "researcher", "acme-test").id
+    return broker
 
 
 def test_out_of_scope_short_circuits(engagement, tmp_path):
     b = _broker(engagement, tmp_path)
-    r = b.execute(target="https://evil.org", action="read_http")
+    r = b.execute(target="https://evil.org", action="read_http", session_id=b.test_session_id)
     assert r.ok is False
     assert r.decision == "deny"
     assert "out_of_scope" in r.reason
@@ -52,14 +54,14 @@ def test_out_of_scope_short_circuits(engagement, tmp_path):
 
 def test_forbidden_action_denied(engagement, tmp_path):
     b = _broker(engagement, tmp_path)
-    r = b.execute(target="https://example.test", action="dos")
+    r = b.execute(target="https://example.test", action="dos", session_id=b.test_session_id)
     assert r.ok is False
     assert r.decision == "deny"
 
 
 def test_approval_required_when_automation_off(engagement, tmp_path):
     b = _broker(engagement, tmp_path)  # default ROE: automation off
-    r = b.execute(target="https://example.test", action="read_http")
+    r = b.execute(target="https://example.test", action="read_http", session_id=b.test_session_id)
     assert r.ok is False
     assert r.decision == "approval_required"
 
@@ -69,7 +71,10 @@ def test_allowed_localhost_roundtrip(allowed_engagement, tmp_path):
     try:
         port = server.server_address[1]
         b = _broker(allowed_engagement, tmp_path)
-        r = b.execute(target=f"http://127.0.0.1:{port}/ok", action="read_http")
+        r = b.execute(
+            target=f"http://127.0.0.1:{port}/ok", action="read_http",
+            session_id=b.test_session_id,
+        )
         assert r.ok is True
         assert r.decision == "allow"
         assert r.status_code == 200
@@ -117,6 +122,7 @@ def test_required_header_matching_is_case_insensitive(tmp_path):
         r = b.execute(
             target=f"http://127.0.0.1:{port}/ok", action="read_http",
             headers={"X-BUG-BOUNTY": "MARKER"},
+            session_id=b.test_session_id,
         )
     finally:
         server.shutdown()

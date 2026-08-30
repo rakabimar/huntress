@@ -22,14 +22,15 @@ Regenerates, per runtime:
 
 ## Lifecycle hooks
 
-Three hooks are wired into the runtime config, each reading a JSON payload on
-stdin and printing JSON on stdout:
+The current Claude lifecycle is wired with exact-session binding:
 
 - **SessionStart** — inject the active program's compact brief (scope summary,
   ROE flags, accounts-as-metadata, current lead/hypotheses).
 - **PreToolUse** (`Bash`) — backstop: deny dangerous commands (`rm -rf /`,
   `git push`, `curl … | sh`, raw network tools against non-fixture hosts).
-- **Stop** — end the current session and persist a checkpoint.
+- **PostToolUse/PostToolUseFailure** — record model-safe action provenance.
+- **PreCompact/Stop/SessionEnd** — persist a current-state checkpoint; only the
+  exact `BUGHUNT_SESSION_ID` may close its session.
 
 ## Session binding & isolation
 
@@ -41,3 +42,8 @@ stdin and printing JSON on stdout:
 
 This is the mechanism that makes "one program per session" a hard technical
 boundary, not a note in a brief.
+
+Claude direct network access is loopback-only. Codex is generated with
+`approval_policy="never"`, workspace-write sandboxing, and network disabled;
+OpenCode denies web fetch and generic Bash. Runtime versions are validated when
+installed; absent secondary runtimes are reported generated but unverified.

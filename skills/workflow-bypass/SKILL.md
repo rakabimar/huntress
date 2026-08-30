@@ -1,10 +1,19 @@
 ---
 name: workflow-bypass
 description: Use when a feature has a multi-step flow, state transition, approval chain, or wizard that may be skipped, replayed, or jumped to its terminal state.
-maturity: draft
+maturity: stable
 risk_class: R2
 category: business-logic
 cwe: [841]
+canonical: true
+primary_specialist: business-logic-specialist
+related_skills: [business-logic, feature-threat-model, race-condition, api-authorization]
+primary_triggers: [multi-step flow, state transition, approval chain, skipped step]
+secondary_triggers: [replay, stale state, alternate endpoint, out-of-order action]
+negative_triggers: [cosmetic step, idempotent replay, server revalidates prerequisites]
+blackbox: true
+whitebox: true
+behavioral_eval_status: fixture
 ---
 
 # Workflow Bypass

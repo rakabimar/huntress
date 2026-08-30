@@ -1,0 +1,7 @@
+name: evidence-websocket
+input: "A foreign channel subscribe returns subscribed, but no event or protected data has arrived."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

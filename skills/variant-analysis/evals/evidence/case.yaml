@@ -1,0 +1,8 @@
+name: variant-needs-root-cause-evidence
+input: "A CVE title says path traversal, but only a release note is available; no vulnerable code, fix diff, invariant, or affected version has been captured."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  source_runtime_correlation: required_when_hosted
+  max_requests: 0

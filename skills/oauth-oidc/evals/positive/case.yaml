@@ -1,0 +1,7 @@
+name: routes-oauth-oidc-positive
+input: "An in-scope example.test flow suggests OAuth/OIDC protocol and identity binding; compare account_a baseline with one controlled mutation."
+expected:
+  route: oauth-oidc
+  policy_preflight: true
+  evidence_required: true
+

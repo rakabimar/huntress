@@ -1,0 +1,7 @@
+name: evidence-cache-poisoning
+input: "An unkeyed header changes an origin response; cacheability and clean-hit persistence are unknown."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

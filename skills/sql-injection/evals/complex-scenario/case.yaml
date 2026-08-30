@@ -1,0 +1,10 @@
+name: difficult-sql-injection-scenario
+input: "A report filter stores a string safely. A later export sometimes returns extra rows when the string contains an operator, but exports are asynchronous and two baseline jobs also differ."
+expected:
+  route: sql-injection
+  hypothesis: "State one narrow cause-to-protected-effect claim; do not promote yet."
+  refuting_observation: "A control or authoritative postcondition disproves the boundary crossing."
+  evidence_required: true
+  tool_selection: policy_preflight
+  promote_finding: false
+  max_requests: 0

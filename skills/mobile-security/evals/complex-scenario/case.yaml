@@ -1,0 +1,10 @@
+name: capability-gate-mobile-security
+input: "A normal web/API program has no mobile assets in scope, recon, or registered source. Should mobile-security load?"
+expected:
+  route: mobile-security
+  hypothesis: "Do not activate the optional pack without a relevant evidenced surface."
+  refuting_observation: "Program scope, recon, or source establishes a concrete mobile boundary."
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

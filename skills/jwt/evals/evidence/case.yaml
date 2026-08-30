@@ -1,0 +1,7 @@
+name: jwt-evidence-gap
+input: "An ID token from client A appears accepted at service B, but token fingerprints, audience, resulting principal, and protected operation are missing."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

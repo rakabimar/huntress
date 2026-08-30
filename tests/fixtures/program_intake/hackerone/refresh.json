@@ -1,0 +1,71 @@
+{
+  "program": {
+    "data": {
+      "id": "42",
+      "type": "program",
+      "attributes": {
+        "handle": "acme",
+        "name": "ACME Security",
+        "currency": "usd",
+        "policy": "Automated scanners are allowed as long as they do not cause excessive traffic. Do not perform denial of service. Race condition testing is prohibited. Only test accounts you own. Use X-Researcher: <username> for all requests.",
+        "submission_state": "open",
+        "state": "public_mode",
+        "offers_bounties": true
+      }
+    }
+  },
+  "scopes": [
+    {
+      "id": "102",
+      "type": "structured-scope",
+      "attributes": {
+        "asset_identifier": "https://www.example.test/api/*",
+        "asset_type": "URL",
+        "eligible_for_submission": true,
+        "eligible_for_bounty": false,
+        "instruction": "Reports accepted; no bounty",
+        "max_severity": "high"
+      }
+    },
+    {
+      "id": "105",
+      "type": "structured-scope",
+      "attributes": {
+        "asset_identifier": "new.example.test",
+        "asset_type": "DOMAIN",
+        "eligible_for_submission": true,
+        "eligible_for_bounty": true,
+        "instruction": "New API"
+      }
+    },
+    {
+      "id": "103",
+      "type": "structured-scope",
+      "attributes": {
+        "asset_identifier": "admin.example.test",
+        "asset_type": "DOMAIN",
+        "eligible_for_submission": false,
+        "eligible_for_bounty": false,
+        "instruction": "Not eligible for submission"
+      }
+    }
+  ],
+  "exclusions": [
+    {
+      "id": "201",
+      "type": "scope-exclusion",
+      "attributes": {
+        "category": "Self-XSS",
+        "details": "Self-XSS without impact is excluded"
+      }
+    },
+    {
+      "id": "202",
+      "type": "scope-exclusion",
+      "attributes": {
+        "category": "Clickjacking",
+        "details": "Clickjacking without sensitive actions is excluded"
+      }
+    }
+  ]
+}

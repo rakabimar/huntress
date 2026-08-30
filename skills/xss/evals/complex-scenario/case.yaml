@@ -1,0 +1,10 @@
+name: difficult-xss-scenario
+input: "A Markdown preview renders an image tag after sanitization. An event attribute appears in developer tools but CSP blocks execution and the saved published view uses a different sanitizer."
+expected:
+  route: xss
+  hypothesis: "State one narrow cause-to-protected-effect claim; do not promote yet."
+  refuting_observation: "A control or authoritative postcondition disproves the boundary crossing."
+  evidence_required: true
+  tool_selection: policy_preflight
+  promote_finding: false
+  max_requests: 0

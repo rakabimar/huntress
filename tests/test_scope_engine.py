@@ -3,7 +3,7 @@
 import pytest
 
 from bughunt_harness.engagement.models import ScopeModel, ScopeSet
-from bughunt_harness.scope.engine import ScopeEngine, parse_target
+from bughunt_harness.scope.engine import ScopeEngine, normalize_target, parse_target
 
 
 def _engine(**include_kw):
@@ -64,3 +64,31 @@ def test_parse_target_rejects_empty():
         parse_target("")
     with pytest.raises(ValueError):
         parse_target("   ")
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        "https://example.test/allowed/%252e%252e/admin",
+        "https://example.test/allowed/%2fadmin",
+        "https://example.test/allowed\\..\\admin",
+        "https://user@example.test/allowed",
+        "https://example.test/allowed//child",
+        "https://example.test:0/allowed",
+    ],
+)
+def test_ambiguous_targets_fail_closed(target):
+    engine = _engine(path_urls=["https://example.test/allowed"])
+    decision = engine.check(target)
+    assert not decision.allowed
+    assert "ambiguous_or_invalid_target" in decision.reason
+
+
+def test_dot_segments_are_normalized_before_path_scope():
+    engine = _engine(path_urls=["https://example.test/allowed"])
+    assert not engine.check("https://example.test/allowed/../admin").allowed
+    assert not engine.check("https://example.test/allowed/%2e%2e/admin").allowed
+
+
+def test_host_default_port_fragment_case_and_trailing_dot_normalize():
+    assert normalize_target("HTTPS://Example.TEST.:443/api#fragment") == "https://example.test/api"

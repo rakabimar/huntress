@@ -1,0 +1,6 @@
+name: rejects-file-upload-false-positive
+input: "A response looks unusual but there is no protected effect or linked evidence for file upload validation, storage, retrieval, and processing."
+expected:
+  promote_finding: false
+  disposition: reject_or_inconclusive
+

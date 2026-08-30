@@ -21,6 +21,12 @@ class ProgramError(HarnessError):
     """Program registry / workspace problems."""
 
 
+class ProgramIntakeError(ProgramError):
+    """Program intake, review, refresh, or approval failed closed."""
+
+    exit_code = 10
+
+
 class ProgramNotFoundError(ProgramError):
     exit_code = 2
 

@@ -15,8 +15,10 @@ Invariants enforced here:
 from __future__ import annotations
 
 import ipaddress
+import posixpath
+import re
 from dataclasses import dataclass, field
-from urllib.parse import urlparse
+from urllib.parse import quote, unquote, urlparse, urlunparse
 
 from ..engagement.models import ScopeModel, ScopeSet
 
@@ -34,12 +36,24 @@ class TargetRef:
     port: int | None
     path: str = "/"
     is_ip: bool = False
+    query: str = ""
 
     @property
     def netloc(self) -> str:
         if self.port:
             return f"{self.host}:{self.port}"
         return self.host
+
+    @property
+    def normalized(self) -> str:
+        if self.scheme is None:
+            return self.netloc
+        host = f"[{self.host}]" if ":" in self.host and self.is_ip else self.host
+        default = (self.scheme == "https" and self.port in (None, 443)) or (
+            self.scheme == "http" and self.port in (None, 80)
+        )
+        netloc = host if default else f"{host}:{self.port}"
+        return urlunparse((self.scheme, netloc, self.path, "", self.query, ""))
 
 
 @dataclass
@@ -65,7 +79,41 @@ class ScopeDecision:
 
 
 def _normalize_host(host: str) -> str:
-    return (host or "").strip().rstrip(".").lower()
+    raw = (host or "").strip().rstrip(".").lower()
+    if not raw:
+        return raw
+    try:
+        return raw.encode("idna").decode("ascii")
+    except UnicodeError as exc:
+        raise ValueError(f"invalid internationalized host: {host!r}") from exc
+
+
+_BAD_PERCENT = re.compile(r"%(?![0-9a-fA-F]{2})")
+_ENCODED_SLASH = re.compile(r"%(2f|5c|00)", re.IGNORECASE)
+
+
+def _normalize_path(path: str) -> str:
+    raw = path or "/"
+    if _BAD_PERCENT.search(raw):
+        raise ValueError("path contains invalid percent encoding")
+    if _ENCODED_SLASH.search(raw):
+        raise ValueError("encoded slash/backslash/NUL in path is ambiguous")
+    decoded = unquote(raw)
+    if re.search(r"%[0-9a-fA-F]{2}", decoded):
+        raise ValueError("multiply encoded path is ambiguous")
+    if "\\" in decoded or any(ord(ch) < 32 for ch in decoded):
+        raise ValueError("path contains an ambiguous separator/control character")
+    if "//" in decoded:
+        raise ValueError("repeated path separators are ambiguous")
+    trailing = decoded.endswith("/")
+    normalized = posixpath.normpath(decoded)
+    if not normalized.startswith("/"):
+        normalized = "/" + normalized
+    if trailing and normalized != "/":
+        normalized += "/"
+    # Preserve ordinary URL escaping while ensuring dot-segment comparison is
+    # performed on the decoded semantic path.
+    return quote(normalized, safe="/:@!$&'()*+,;=-._~")
 
 
 def parse_target(target: str) -> TargetRef:
@@ -77,9 +125,21 @@ def parse_target(target: str) -> TargetRef:
     if "://" in raw:
         p = urlparse(raw)
         scheme = (p.scheme or "").lower()
+        if scheme not in ("http", "https"):
+            raise ValueError("only absolute http(s) targets are supported")
+        if p.username is not None or p.password is not None or "@" in p.netloc.rsplit("]", 1)[-1]:
+            raise ValueError("URL userinfo is forbidden")
         host = _normalize_host(p.hostname or "")
-        port = p.port
-        path = p.path or "/"
+        try:
+            port = p.port
+        except ValueError as exc:
+            raise ValueError("invalid URL port") from exc
+        if port == (443 if scheme == "https" else 80):
+            port = None
+        elif port is not None and not 1 <= port <= 65535:
+            raise ValueError("invalid URL port")
+        path = _normalize_path(p.path or "/")
+        query = p.query
     else:
         scheme = None
         # Bare host, possible ":port" suffix, no path.
@@ -89,8 +149,13 @@ def parse_target(target: str) -> TargetRef:
             maybe_host, maybe_port = host_port.rsplit(":", 1)
             if maybe_port.isdigit():
                 host_port, port = maybe_host, int(maybe_port)
+                if not 1 <= port <= 65535:
+                    raise ValueError("invalid target port")
         host = _normalize_host(host_port)
         path = "/"
+        query = ""
+        if any(ch in raw for ch in ("/", "?", "#", "@")):
+            raise ValueError("bare targets may contain only a host and optional port")
 
     if not host:
         raise ValueError(f"could not extract a host from target: {target!r}")
@@ -102,7 +167,10 @@ def parse_target(target: str) -> TargetRef:
     except ValueError:
         pass
 
-    return TargetRef(raw=raw, scheme=scheme, host=host, port=port, path=path, is_ip=is_ip)
+    return TargetRef(
+        raw=raw, scheme=scheme, host=host, port=port, path=path,
+        is_ip=is_ip, query=query,
+    )
 
 
 def _host_matches_wildcard(host: str, wildcard: str) -> bool:
@@ -151,19 +219,20 @@ class ScopeEngine:
             return None
         entries = list(ruleset.urls) + list(ruleset.path_urls)
         for entry in entries:
-            p = urlparse(entry)
-            if (p.scheme or "").lower() != ref.scheme:
+            try:
+                rule = parse_target(entry)
+            except ValueError:
                 continue
-            ehost = _normalize_host(p.hostname or "")
-            if ehost != ref.host:
+            if rule.scheme != ref.scheme:
                 continue
-            eport = p.port  # None for default 80/443
+            if rule.host != ref.host:
+                continue
             # Compare effective ports, treating missing as default.
             ref_port = ref.port if ref.port else (443 if ref.scheme == "https" else 80)
-            rule_port = eport if eport else (443 if ref.scheme == "https" else 80)
+            rule_port = rule.port if rule.port else (443 if ref.scheme == "https" else 80)
             if ref_port != rule_port:
                 continue
-            rule_path = p.path or "/"
+            rule_path = rule.path or "/"
             if _path_prefix_match(ref.path, rule_path):
                 return entry
         return None
@@ -209,7 +278,13 @@ class ScopeEngine:
 
     # -- public API -------------------------------------------------------
     def check(self, target: str) -> ScopeDecision:
-        ref = parse_target(target)
+        try:
+            ref = parse_target(target)
+        except ValueError as exc:
+            return ScopeDecision(
+                decision=BLOCKED,
+                reason=f"ambiguous_or_invalid_target: {exc}",
+            )
 
         # 1. Exclusion always wins.
         ex_sel, ex_cat = self._matches(ref, self.scope.exclude)
@@ -239,4 +314,12 @@ class ScopeEngine:
         )
 
 
-__all__ = ["ALLOWED", "BLOCKED", "TargetRef", "ScopeDecision", "ScopeEngine", "parse_target"]
+def normalize_target(target: str) -> str:
+    """Canonical target identity for approvals, evidence, and redirect checks."""
+    return parse_target(target).normalized
+
+
+__all__ = [
+    "ALLOWED", "BLOCKED", "TargetRef", "ScopeDecision", "ScopeEngine",
+    "parse_target", "normalize_target",
+]

@@ -1,0 +1,1 @@
+{"program":{"name":"Generic ACME","handle":"generic-acme","submission_state":"open","policy":"Do not perform denial of service."},"scopes":[{"asset_identifier":"*.example.test","asset_type":"WILDCARD","eligible_for_submission":true,"eligible_for_bounty":false}]}

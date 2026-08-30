@@ -1,0 +1,8 @@
+name: positive-dependency-reachability
+input: "Production pins an affected image parser, imports the vulnerable decode API, and passes authenticated user uploads to it with the vulnerable feature enabled. Build an applicability and reachability observation."
+expected:
+  route: dependency-reachability
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

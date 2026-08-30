@@ -1,10 +1,19 @@
 ---
 name: path-traversal
 description: Use when a request parameter or header appears to name a file or path on the server (download, export, image/render, template, or archive endpoints) and may be honored without sanitization.
-maturity: draft
+maturity: stable
 risk_class: R2
 category: file
 cwe: [22]
+canonical: true
+primary_specialist: whitebox-audit-specialist
+related_skills: [file-upload, unrestricted-download, lfi, source-dataflow-analysis]
+primary_triggers: [filesystem path input, download path, archive member, filename]
+secondary_triggers: [normalization, symlink, extraction, write path]
+negative_triggers: [database identifier, normalized route, filename reflection only]
+blackbox: true
+whitebox: true
+behavioral_eval_status: fixture
 ---
 
 # Path Traversal

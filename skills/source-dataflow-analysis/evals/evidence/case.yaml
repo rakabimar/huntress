@@ -1,0 +1,8 @@
+name: evidence-source-dataflow-analysis
+input: "An archive entry name passes through decoding and normalization before filesystem extraction. Specify evidence for reachability, canonicalization order, destination containment, and a refuting safe path."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  source_runtime_correlation: required_when_hosted
+  max_requests: 0

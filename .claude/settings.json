@@ -12,6 +12,8 @@
       "Read(~/.aws/**)",
       "Read(~/.gnupg/**)",
       "Read(~/.netrc)",
+      "WebFetch",
+      "WebSearch",
       "Bash(sqlite3:*)",
       "Bash(* .db *)**",
       "Bash(git push:*)",
@@ -57,6 +59,16 @@
           }
         ],
         "matcher": "Bash"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/mnt/c/Users/Lenovo/Documents/Pacil/PERKODINGAN/Cyber_Security/bug_bounty/harness hook pre-tool-use",
+            "timeout": 10
+          }
+        ],
+        "matcher": "mcp__playwright.*"
       }
     ],
     "PostToolUse": [
@@ -130,10 +142,7 @@
         "localhost",
         "*.localhost",
         "127.0.0.1",
-        "::1",
-        "*.test",
-        "*.invalid",
-        "*.example"
+        "[::1]"
       ],
       "deniedDomains": []
     }

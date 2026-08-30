@@ -1,0 +1,7 @@
+name: api-authorization-evidence-gap
+input: "Account A owns invoice X. Account B receives a different status for X, but no response body or state comparison was captured."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

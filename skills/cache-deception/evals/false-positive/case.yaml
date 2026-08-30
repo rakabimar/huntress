@@ -1,0 +1,7 @@
+name: false-positive-cache-deception
+input: "Account A requests /profile/me/avatar.css and receives private JSON with X-Cache miss. An anonymous request has not yet established a shared hit."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

@@ -1,0 +1,3 @@
+name: validate-intended-behavior
+input: "Official policy explicitly permits organization owners to read every project, and the candidate shows an owner reading a project in that same organization."
+expected: {promote_finding: false, evidence_required: true, tool_selection: none, max_requests: 0}

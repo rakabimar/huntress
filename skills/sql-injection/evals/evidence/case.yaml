@@ -1,0 +1,7 @@
+name: sql-injection-evidence-gap
+input: "One request is 700 ms slower after a timing-like input, but no repeated baseline/true/false samples or cache controls exist."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

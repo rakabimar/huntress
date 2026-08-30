@@ -1,65 +1,55 @@
 # Skill library
 
-Skills encode *how* a specialist stance executes a specific technique. They live
-in `skills/<slug>/SKILL.md` with a YAML frontmatter and a fixed body structure,
-and are routed through `skills/manifest.yaml`.
+The library contains 77 directories: 72 active canonical skills and five thin
+deprecated aliases. Maturity is 47 stable and 30 draft. Skill count is not the
+objective—the router chooses one primary plus at most two supporting skills so
+the model receives the smallest relevant decision context.
 
-## Anatomy
+## Taxonomy
 
-```yaml
----
-name: open-redirect
-description: …what it finds and when to use it…
-maturity: draft          # draft | stable | verified
-risk_class: R1           # R0–R4
-category: injection      # core / injection / authnz / …
-cwe: [CWE-601]
----
-# Title
+- Core methodology includes the research stances, `research-loop`,
+  `feature-threat-model`, and `exploit-chain-analysis`.
+- Web/API contains the canonical authorization, identity, injection, browser,
+  business-logic, file, protocol, and infrastructure skills.
+- White-box contains `source-audit-context`, `source-dataflow-analysis`,
+  `source-authorization-analysis`, `git-history-security`,
+  `differential-security-review`, `variant-analysis`,
+  `dependency-reachability`, and `secret-exposure-analysis`.
+- Platform/protocol additions include `cicd-security`, `saml-sso`,
+  `webhook-security`, `http-parameter-pollution`, and `cache-deception`.
+- Cloud, AI, client reverse, mobile, gRPC, and fuzzing are optional draft
+  capability packs.
 
-## Purpose
-## When to use
-## Process
-## Evidence
-## False positives
-## Stop conditions
-```
+The deepest canonical skills are `api-authorization`, `access-control`,
+`authentication`, `session-management`, `jwt`, `oauth-oidc`, `business-logic`,
+`graphql`, `file-upload`, `ssrf`, `xss`, and `sql-injection`. Their compact entry
+files progressively route into vulnerability-specific mental models, attack
+surfaces, implementation notes, decision methods, false positives, evidence,
+impact, remediation, and public-report patterns.
 
-The six `##` sections are *required*. `maturity` and `risk_class` are
-schema-validated (`VALID_MATURITY`, `VALID_RISK`).
+## Routing and aliases
 
-## Categories (48 skills)
+Frontmatter declares primary/secondary/negative triggers, related skills,
+specialist, black-box/white-box applicability, tools, capability pack, and
+behavioral fixture status. Capability packs remain dormant without an explicit
+signal. `idor`, `sqli`, `authn-bypass`, `jwt-misuse`, and `oauth-misuse` resolve
+to their canonical replacements and never load duplicate prose.
 
-- **core (8)** — `observe`, `hypothesize`, `research-loop`, `attack`, `defend`,
-  `triage`, `validate`, `report`
-- **injection (8)** — sqli, nosqli, command-injection, xss, xxe, ssti,
-  ldap-injection, header-injection
-- **authnz (6)** — authn-bypass, jwt-misuse, oauth-misuse, idor,
-  privilege-escalation, session-fixation
-- **business-logic (5)** — business-logic, race-condition, mass-assignment,
-  payment-logic, workflow-bypass
-- **file (4)** — file-upload, path-traversal, lfi, unrestricted-download
-- **web (3)** — csrf, ssrf, open-redirect
-- **client-side (4)** — prototype-pollution, cors-misconfig, postmessage, websocket
-- **infra (4)** — subdomain-takeover, request-smuggling, host-header, cache-poisoning
-- **crypto-config (4)** — crypto-misuse, information-disclosure,
-  insecure-deserialization, rate-limit-bypass
-- **recon (2)** — recon-passive, api-enumeration
+## Stable maturity gate
 
-## Validation & evaluation
+A stable technical skill must have distinct technical methodology, routing
+boundaries, implementation guidance, false-positive reasoning, evidence and
+remediation guidance, stop conditions, all eight deterministic eval groups, and
+a behavioral fixture. The validator warns about highly similar references
+across unrelated categories.
 
 ```bash
 ./harness skill list
-./harness skill validate     # schema + required sections + fixture hosts + manifest coverage
-./harness skill eval [slug]  # per-skill deterministic checks
+./harness skill validate
+./harness skill eval [slug]
+./harness skill eval api-authorization --behavioral --runtime claude --ablation
 ```
 
-Two invariants are enforced structurally (spec §81):
-
-1. Every skill carries all six required sections and a valid maturity/risk class.
-2. Every example URL in a skill body must target a **fixture host** —
-   `localhost`/loopback or a reserved TLD (`.test`, `.invalid`, `.localhost`,
-   `.example`). Real hosts are never used in skill examples.
-
-The manifest router (`skills/manifest.yaml`) must reference every skill (and
-vice-versa); `skill validate` flags orphans in either direction.
+Structural evaluation and pytest never invoke a model. See
+[skill authoring](skill-authoring.md), [deterministic evals](skill-evals.md), and
+[behavioral evals](behavioral-evals.md).

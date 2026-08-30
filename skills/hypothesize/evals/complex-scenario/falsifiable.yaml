@@ -1,0 +1,9 @@
+name: make-boundary-falsifiable
+input: "Account A owns export J. Account B can see J in a list, but download authorization is unknown. Form one cause-to-effect hypothesis and a distinct refuting observation."
+expected:
+  route: hypothesize
+  hypothesis: "If B downloads J, B receives A's protected export across the ownership boundary."
+  refuting_observation: "B is denied or receives no A-owned content."
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

@@ -1,0 +1,7 @@
+name: false-positive-webhook-security
+input: "A signed payment webhook is valid for provider account A but names an order belonging to tenant B. The handler returns 200; no ledger state has been checked."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

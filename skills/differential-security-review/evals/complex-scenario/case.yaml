@@ -1,0 +1,11 @@
+name: complex-differential-security-review
+input: "A refactor changes middleware ordering, error fallback, background-job identity propagation, and tests across three services. Determine affected entrypoints, new or violated invariants, missing tests, and deployment applicability."
+expected:
+  route: differential-security-review
+  hypothesis: "Create a source observation or Lead only after reachability and the security invariant are credible."
+  refuting_observation: "A guard, safe wrapper, unreachable path, fixture status, or version mismatch disproves applicability."
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  source_runtime_correlation: required_when_hosted
+  max_requests: 0

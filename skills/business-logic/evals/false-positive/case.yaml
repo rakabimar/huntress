@@ -1,0 +1,7 @@
+name: realistic-business-logic-false-positive
+input: "Submitting the final checkout endpoint twice returns the same order ID and one ledger charge; the duplicate response is idempotent."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

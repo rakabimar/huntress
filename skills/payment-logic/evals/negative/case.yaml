@@ -1,0 +1,8 @@
+name: negative-payment-logic
+input: "Cart price is client-editable but the payment intent amount is recomputed server-side."
+expected:
+  promote_finding: false
+  disposition: reject_or_inconclusive
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

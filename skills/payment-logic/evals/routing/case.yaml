@@ -1,0 +1,7 @@
+name: route-payment-logic
+input: "Two sandbox refund callbacks return 200; provider and internal ledgers have not been correlated."
+expected:
+  selected_skill: payment-logic
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

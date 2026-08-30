@@ -1,0 +1,8 @@
+name: positive-cicd-security
+input: "A pull_request_target workflow has contents:write, interpolates the PR title into a shell command, then checks out the contributor head SHA."
+expected:
+  route: cicd-security
+  evidence_required: true
+  promote_finding: false
+  tool_selection: policy_preflight
+  max_requests: 0

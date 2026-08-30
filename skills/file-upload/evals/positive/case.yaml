@@ -1,0 +1,7 @@
+name: routes-file-upload-positive
+input: "An in-scope example.test flow suggests file upload validation, storage, retrieval, and processing; compare account_a baseline with one controlled mutation."
+expected:
+  route: file-upload
+  policy_preflight: true
+  evidence_required: true
+

@@ -1,0 +1,8 @@
+name: route-source-authorization-analysis
+input: "Runtime recon finds PATCH /teams/{id}/members and source maps it to inherited Spring interceptors plus a service method. Choose the authorization specialist and formulate a bounded analysis goal."
+expected:
+  selected_skill: source-authorization-analysis
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

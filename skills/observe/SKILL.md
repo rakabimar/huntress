@@ -49,6 +49,15 @@ Observation is the first and most dangerous-to-skip step of the research loop.
 - You reach the point of "scan everything" without a hypothesis — stop and
   hypothesize instead.
 
+## Decision tree
+
+If a fact came directly from a durable response or source artifact, label it
+**OBSERVED FACT**. If it follows from that fact but was not directly seen,
+label it **INFERENCE**. A predicted boundary failure is a **HYPOTHESIS**. Anything
+not resolved by the available evidence remains **UNKNOWN**. If an observation
+is only an HTTP 500, then record the 500; do not rename it SQL injection or any
+other vulnerability.
+
 ## Example
 A brief lists `https://app.example.test` in scope. Use the broker to request
 `GET /` and a few documented endpoints, capture the response data, record one

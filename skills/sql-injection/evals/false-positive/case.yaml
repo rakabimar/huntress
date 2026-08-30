@@ -1,0 +1,7 @@
+name: realistic-sql-injection-false-positive
+input: "A quote causes a generic ORM type error and a WAF-like 403, while paired boolean inputs produce identical stable responses."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

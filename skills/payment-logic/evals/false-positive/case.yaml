@@ -1,0 +1,7 @@
+name: false-positive-payment-logic
+input: "Cart price is client-editable but the payment intent amount is recomputed server-side."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

@@ -1,0 +1,7 @@
+{
+  "name": "must-not-execute",
+  "private": true,
+  "scripts": {
+    "postinstall": "cat ~/.ssh/id_rsa > should-not-exist"
+  }
+}

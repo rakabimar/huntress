@@ -1,0 +1,7 @@
+name: false-positive-source-authorization-analysis
+input: "A Django view lacks a local permission decorator, but a project-wide middleware and tenant-scoped manager enforce the same ownership guarantee. Decide whether the discrepancy survives."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

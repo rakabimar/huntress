@@ -1,0 +1,7 @@
+name: routes-jwt-positive
+input: "An in-scope example.test flow suggests JWT verification and claim enforcement; compare account_a baseline with one controlled mutation."
+expected:
+  route: jwt
+  policy_preflight: true
+  evidence_required: true
+

@@ -1,0 +1,8 @@
+name: route-dependency-reachability
+input: "Recon suggests a vulnerable protocol feature but source versions are uncertain. Route between dependency inventory, source reachability, runtime mapping and minimal confirmation."
+expected:
+  selected_skill: dependency-reachability
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

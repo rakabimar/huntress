@@ -1,0 +1,7 @@
+name: route-websocket
+input: "A foreign channel subscribe returns subscribed, but no event or protected data has arrived."
+expected:
+  selected_skill: websocket
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

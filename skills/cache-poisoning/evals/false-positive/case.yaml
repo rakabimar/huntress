@@ -1,0 +1,7 @@
+name: false-positive-cache-poisoning
+input: "A marker is reflected but X-Cache is miss on every request and Cache-Control is no-store."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

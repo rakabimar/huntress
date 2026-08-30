@@ -1,10 +1,19 @@
 ---
 name: payment-logic
 description: Use when inspecting checkout, cart, order, coupon, or payment flows for price tampering and business-logic abuse.
-maturity: draft
+maturity: stable
 risk_class: R2
 category: business-logic
 cwe: [841]
+canonical: true
+primary_specialist: business-logic-specialist
+related_skills: [business-logic, race-condition, webhook-security, workflow-bypass]
+primary_triggers: [checkout, payment, refund, price, currency, provider state]
+secondary_triggers: [coupon, tax, quantity, settlement, reconciliation]
+negative_triggers: [client value ignored, sandbox-only artifact, one authoritative charge]
+blackbox: true
+whitebox: true
+behavioral_eval_status: fixture
 ---
 
 # Payment Logic Integrity

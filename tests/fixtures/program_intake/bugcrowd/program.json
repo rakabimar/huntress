@@ -1,0 +1,8 @@
+{
+  "data": [{"type":"program","id":"00000000-0000-0000-0000-000000000001","attributes":{"code":"acme","name":"ACME","status":"open"},"relationships":{"current_brief":{"data":{"type":"program_brief","id":"00000000-0000-0000-0000-000000000002"}}}}],
+  "included": [
+    {"type":"program_brief","id":"00000000-0000-0000-0000-000000000002","attributes":{"rules":"Do not perform denial of service."},"relationships":{"target_groups":{"data":[{"type":"target_group","id":"00000000-0000-0000-0000-000000000003"}]}}},
+    {"type":"target_group","id":"00000000-0000-0000-0000-000000000003","attributes":{"name":"In scope","description":"Production APIs"},"relationships":{"targets":{"data":[{"type":"target","id":"00000000-0000-0000-0000-000000000004"}]},"reward_range":{"data":{"type":"reward_range","id":"00000000-0000-0000-0000-000000000005"}}}},
+    {"type":"target","id":"00000000-0000-0000-0000-000000000004","attributes":{"name":"api.example.test","category":"DOMAIN","description":"Main API"}}
+  ]
+}

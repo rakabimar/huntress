@@ -1,0 +1,10 @@
+name: difficult-ssrf-scenario
+input: "A webhook test rejects a private IP literal but follows a public fixture redirect. The fixture records the first hop; no evidence shows the redirected destination was requested."
+expected:
+  route: ssrf
+  hypothesis: "State one narrow cause-to-protected-effect claim; do not promote yet."
+  refuting_observation: "A control or authoritative postcondition disproves the boundary crossing."
+  evidence_required: true
+  tool_selection: policy_preflight
+  promote_finding: false
+  max_requests: 0

@@ -1,0 +1,7 @@
+name: routes-authentication-positive
+input: "An in-scope example.test flow suggests authentication and identity transitions; compare account_a baseline with one controlled mutation."
+expected:
+  route: authentication
+  policy_preflight: true
+  evidence_required: true
+

@@ -1,0 +1,7 @@
+name: false-positive-differential-security-review
+input: "A diff removes a controller ownership check because the same guarantee moved into the transaction-layer repository used by every caller, with regression tests added. Decide whether a Lead remains."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

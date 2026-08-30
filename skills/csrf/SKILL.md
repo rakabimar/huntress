@@ -1,10 +1,19 @@
 ---
 name: csrf
 description: Use when testing state-changing endpoints, missing or forgeable CSRF tokens, SameSite cookie weaknesses, or login-CSRF variants.
-maturity: draft
+maturity: stable
 risk_class: R2
 category: web
 cwe: [352]
+canonical: true
+primary_specialist: client-side-specialist
+related_skills: [session-management, authentication, cors-misconfig, webhook-security]
+primary_triggers: [ambient cookie authentication, cross-site state change, CSRF token]
+secondary_triggers: [SameSite, Origin Referer, login CSRF, multipart form]
+negative_triggers: [bearer token not sent cross-site, SameSite blocks request, no protected state change]
+blackbox: true
+whitebox: true
+behavioral_eval_status: fixture
 ---
 
 # Cross-Site Request Forgery

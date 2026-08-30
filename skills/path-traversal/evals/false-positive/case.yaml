@@ -1,0 +1,7 @@
+name: false-positive-path-traversal
+input: "The parameter is a database attachment ID and filesystem paths are server-generated."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

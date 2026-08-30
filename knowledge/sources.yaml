@@ -5,10 +5,43 @@
 
 canonical:
   core_manual: AGENT_CORE.md          # single behavioral source for every runtime
-  agent_specs: agent-specs/           # 8 specialist stances (frontmatter + body)
+  agent_specs: agent-specs/           # specialist stances (frontmatter + body)
   skills: skills/                     # skill library; manifest.yaml is the router
   vendor: vendor/                     # pinned curated third-party skill libraries
   docs: docs/                         # operating + integration + security docs
+
+# Authoritative methodology references used while maintaining the priority
+# skills. Runtime agents do not fetch these automatically: reviewed canonical
+# material remains under skills/. Program scope and Harness policy override
+# every external methodology source.
+methodology_sources:
+  owasp_web_security_testing_guide:
+    url: https://owasp.org/www-project-web-security-testing-guide/
+    authority: OWASP
+  owasp_api_security_top_10:
+    url: https://owasp.org/API-Security/
+    authority: OWASP
+  owasp_application_security_verification_standard:
+    url: https://owasp.org/www-project-application-security-verification-standard/
+    authority: OWASP
+  portswigger_web_security_academy:
+    url: https://portswigger.net/web-security
+    authority: PortSwigger
+  oauth_2_0_security_best_current_practice:
+    url: https://www.rfc-editor.org/rfc/rfc9700
+    authority: IETF
+  openid_connect_core:
+    url: https://openid.net/specs/openid-connect-core-1_0.html
+    authority: OpenID Foundation
+  json_web_token:
+    url: https://www.rfc-editor.org/rfc/rfc7519
+    authority: IETF
+  graphql_specification:
+    url: https://spec.graphql.org/
+    authority: GraphQL Foundation
+  first_cvss_v4:
+    url: https://www.first.org/cvss/v4-0/
+    authority: FIRST
 
 # Global knowledge: sanitized, program-agnostic lessons reusable across programs.
 global:
@@ -20,10 +53,20 @@ global_candidates:
   location: knowledge/global-candidates/
   rule: remove target domains, user data, secrets, and proprietary details first
 
-# Vendor pins (pinned at a known-good revision; see vendor/README.md).
-# Intentionally empty in this build — no third-party code is vendored until a
-# human reviews it for license + content safety.
+# Vendor pins (see vendor/README.md). These entries are deliberately explicit
+# about being reserved rather than pretending an empty directory is a pin. A
+# real pin must record source, exact revision, license review, and content
+# safety review before it can inform canonical skills.
 vendor:
-  claude-bug-bounty: vendor/claude-bug-bounty/
-  claude-red: vendor/claude-red/
-  other-curated: vendor/other-curated/
+  claude-bug-bounty:
+    path: vendor/claude-bug-bounty/
+    status: reserved_not_vendored
+    revision: null
+  claude-red:
+    path: vendor/claude-red/
+    status: reserved_not_vendored
+    revision: null
+  other-curated:
+    path: vendor/other-curated/
+    status: reserved_not_vendored
+    revision: null

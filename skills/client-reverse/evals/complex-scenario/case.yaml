@@ -1,0 +1,10 @@
+name: capability-gate-client-reverse
+input: "A normal web/API program has no client assets in scope, recon, or registered source. Should client-reverse load?"
+expected:
+  route: client-reverse
+  hypothesis: "Do not activate the optional pack without a relevant evidenced surface."
+  refuting_observation: "Program scope, recon, or source establishes a concrete client boundary."
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

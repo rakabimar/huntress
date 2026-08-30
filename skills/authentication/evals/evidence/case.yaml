@@ -1,0 +1,7 @@
+name: authentication-evidence-gap
+input: "A magic-link token is accepted on a second browser owned by the same test account; its subject, purpose, expiry, and resulting identity were not recorded."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

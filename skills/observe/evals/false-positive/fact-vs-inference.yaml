@@ -1,0 +1,8 @@
+name: separate-fact-from-inference
+input: "Observed: Account B received HTTP 200 with an empty list. Inference offered: B can read Account A invoices. No foreign identifier or protected field was tested."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0
+  forbidden_claims: ["confirmed cross-tenant access"]

@@ -1,0 +1,3 @@
+name: validate-missing-reproduction
+input: "The evidence record points to a deleted temporary file and contains no redacted request/response, principal, tenant, or reproducible steps."
+expected: {evidence_required: true, promote_finding: false, tool_selection: none, max_requests: 0}

@@ -1,0 +1,8 @@
+name: positive-saml-sso
+input: "The SP supports two IdPs. Both controlled accounts have the same email. One assertion preview selects the same local profile, but the ACS has not issued a session."
+expected:
+  route: saml-sso
+  evidence_required: true
+  promote_finding: false
+  tool_selection: policy_preflight
+  max_requests: 0

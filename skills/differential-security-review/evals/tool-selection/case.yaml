@@ -1,0 +1,6 @@
+name: tool-differential-security-review
+input: "An authorization helper changed in one file and has dozens of callers. Choose git diff, symbol callers, Semgrep, CodeQL, and sandbox tests in the least expensive useful order."
+expected:
+  tool_selection: none
+  evidence_required: true
+  max_requests: 0

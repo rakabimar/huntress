@@ -1,0 +1,7 @@
+name: file-upload-evidence-gap
+input: "A ZIP processor reports success, but no extracted path, harmless marker, storage key, or processor postcondition was captured."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

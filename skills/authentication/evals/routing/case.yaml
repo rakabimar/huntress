@@ -1,0 +1,6 @@
+name: selects-authentication
+input: "Plan a bounded test for authentication and identity transitions on https://api.example.test using configured test accounts."
+expected:
+  selected_skill: authentication
+  target_fixture_only: true
+

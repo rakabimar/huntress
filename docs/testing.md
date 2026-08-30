@@ -5,8 +5,14 @@ library, adapters, broker (against a loopback fixture), prompt-injection
 backstop, and program isolation.
 
 ```bash
-./.venv/bin/python -m pytest tests/ -q      # or: ./harness  (no; use pytest directly)
+./.venv/bin/python -m pytest tests/ -q
 ./.venv/bin/python -m pytest tests/ -v
+
+# Deterministic fresh-checkout gate (no optional workstation binaries/models)
+./.venv/bin/python -m pytest -m "unit or integration_local" -ra
+
+# Optional tools are separately classified and skip truthfully when absent
+./.venv/bin/python -m pytest -m external_tool -ra
 ```
 
 ## What's covered

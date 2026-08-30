@@ -1,0 +1,7 @@
+name: evidence-race-condition
+input: "Two approval requests returned 200, but the final controlled state has not been read. Identify the missing postcondition evidence before support."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

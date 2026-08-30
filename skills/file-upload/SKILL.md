@@ -1,46 +1,43 @@
 ---
 name: file-upload
-description: Use when testing endpoints that accept file uploads, avatars, attachments, or imports for unrestricted file upload weaknesses.
-maturity: draft
+description: Use for the complete file lifecycle—selection, multipart/direct upload, validation, naming, storage, processing, transformation, metadata, retrieval, rendering, sharing, overwrite, archive extraction, and deletion.
+maturity: stable
 risk_class: R2
 category: file
-cwe: [434]
+cwe: [22, 434, 436, 646]
+canonical: true
+primary_specialist: client-side-specialist
+related_skills: [path-traversal, xss, xxe, ssrf, api-authorization]
+primary_triggers: [multipart upload, direct upload, signed upload URL, attachment]
+secondary_triggers: [image processor, archive, SVG, PDF, metadata, storage bucket]
+negative_triggers: [file accepted but safely stored and served]
+blackbox: true
+whitebox: true
+behavioral_eval_status: fixture
 ---
 
-# Unrestricted File Upload
+# File Upload
 
 ## Purpose
-Unrestricted file upload arises when an application accepts a user-supplied file without adequately validating its extension, MIME type, or content, and serves it back from a predictable or executable location. For bug hunting it matters because every upload field — an avatar, an attachment, an import form — is a candidate gateway for stored content and, in the worst case, code execution. Proving it requires demonstrating that a malicious or disallowed file is actually stored and retrievable, not merely accepted.
+Determine whether attacker-controlled bytes cross an interpretation, storage, path, ownership, or retrieval boundary anywhere in the file lifecycle. Upload acceptance alone is not a vulnerability.
 
 ## When to use
-- Endpoints with `multipart/form-data` upload fields (avatars, logos, documents, batch import).
-- Features that reflect or re-serve uploaded content (image preview, download link, profile display).
-- Apps whose validation is purely client-side or that check only the filename extension or a caller-supplied MIME type.
-- Uploads placed into web-accessible directories (e.g. `/uploads`, `/media`, `/static`).
+Use for multipart and direct-to-storage uploads, signed URLs, avatars/attachments/imports, image/document/media processing, metadata extraction, archives, SVG/HTML/XML/PDF/office formats, public/private sharing, overwrite, and deletion.
 
 ## Process
-1. Enumerate the upload surface and its response: does it echo a URL, an ID, or the stored path? Record what is observable.
-2. Build a falsifiable hypothesis with `create_hypothesis`: "If I upload a file whose extension is whitelisted but whose content is not, then the server stores and later serves it as the disallowed type, crossing a content-type boundary."
-3. Predict the observable if true (retrieved file retains the disallowed content on a second GET) and what would refute it (re-encoding, rename, blocked storage).
-4. Run the minimal controlled experiment through `send_authorized_http_request` only — never raw curl/nmap/sqlmap. Start with a harmless marker file (plain text, a benign payload) whose content is safe regardless of interpretation.
-5. Vary one control at a time: extension case/alternates, MIME header spoofing, double extension, polyglot content, and path/null-byte truncation in the filename.
-6. Retrieve the stored file via a second request and compare against the prediction. Record via `complete_research_test` and `create_evidence`.
-7. Prefer least-invasive proof: show storage + retrieval of content, or confirmation the file lands in an executable path, rather than uploading a live webshell.
+1. Read references/mental-model.md. Draw the lifecycle: client selection → request/signing → server validation → storage key/bucket → processor/transformer → metadata → retrieval/rendering → sharing/deletion.
+2. Identify each interpreter and security invariant: allowed bytes/type, generated path, non-executable serving context, private ownership, safe parser, isolated processor, archive containment.
+3. Establish a benign synthetic baseline. Change one dimension: declared MIME, extension, magic bytes, filename/path, metadata, archive member, document active content, storage/retrieval identity, or processor-triggering content.
+4. Verify the dangerous postcondition: browser execution, server interpretation, out-of-root write, overwrite, unsafe parser effect, unauthorized retrieval, public exposure, or cross-tenant control. A 200 upload response is insufficient.
+5. Prefer inert markers and local fixtures. Separate ingestion, processing, and retrieval into distinct tests when asynchronous.
 
 ## Evidence
-- `request_response` of the upload and the follow-up retrieval, showing the stored file and its served content type.
-- `observation` noting the server's disposition of the filename, path, and content.
-- `command_output` only where a read-side check (e.g. a file listing) was authorized; redact any secrets or PII in filenames or bodies.
+Record a hash/minimal description of test bytes, filename and declared/detected type, upload/storage/retrieval identifiers, processor state, ownership/visibility, and the exact dangerous interpretation or protected postcondition. Do not store malware, secrets, or unnecessary document contents.
 
 ## False positives
-- Content appears accepted but is renamed, re-encoded, or returned as `application/octet-stream` — not an execution path; verify a second GET returns the original content.
-- Validation rejected the file but the app merely renders an error message; rejection is not bypass.
-- Stored to an inaccessible or non-web directory; no retrieval path means no impact.
+Accepted files renamed and served as attachment, SVG sanitized or isolated, public upload by design, signed URLs scoped correctly, parser errors without effect, metadata stripped, archive rejected/contained, and private object IDs that remain authorized.
 
 ## Stop conditions
-- `scope_preflight` rejects the target or a host outside the program — stop.
-- Demonstrating impact would require an R3/R4 action (destructive overwrite, data exfiltration at scale, DOS) and no approval is recorded — stop.
-- Proof would require running or weaponizing an uploaded executable rather than showing inert content — stop.
+Stop before executable malware, production parser crashes, large/decompression bombs, overwriting real files, active content sent to users, or internal/OOB processing outside ROE. ASK for one controlled mutation where policy requires; DENY destructive/DoS formats.
 
-## Example
-On `http://uploads.test` a profile page lets a user set an avatar and returns `/uploads/avatar.<id>`. Hypothesis: a file uploaded with an allowed extension but script content is stored unchanged under an executable path. Upload via the broker a harmless `.txt` whose body is a short marker string, then GET the returned URL and observe whether the marker is served verbatim. If it is, iterate the extension and content-type controls; do not upload a live webshell.
+Read references/attack-surface.md for file-format and lifecycle branches; compose api-authorization for retrieval ownership, SSRF for URL imports, XSS for browser rendering, and path-traversal for storage/extraction paths.

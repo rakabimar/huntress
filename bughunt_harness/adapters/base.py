@@ -102,7 +102,16 @@ class AgentSpec:
         self.model = self.meta.get("model") or None
 
     def render(self, runtime: str) -> str:
-        return render_agent_doc(self.name, self.description, self.body, self.tools or None, self.model)
+        tools = self.tools or None
+        if runtime == "claude" and tools:
+            # Claude names stdio MCP tools as mcp__<server>__<tool> in agent
+            # permission lists. Canonical specs keep vendor-neutral tool names.
+            tools = [
+                tool if tool.startswith(("mcp__", "Read", "Write", "Edit", "Bash", "Agent"))
+                else f"mcp__bughunt__{tool}"
+                for tool in tools
+            ]
+        return render_agent_doc(self.name, self.description, self.body, tools, self.model)
 
 
 def load_specs() -> list[AgentSpec]:

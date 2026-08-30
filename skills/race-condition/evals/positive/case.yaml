@@ -1,0 +1,8 @@
+name: positive-race-condition
+input: "Two synchronized coupon redemptions both succeed and the controlled account ledger records two credits despite a single-use invariant. State the supported boundary and evidence."
+expected:
+  route: race-condition
+  evidence_required: true
+  promote_finding: false
+  tool_selection: policy_preflight
+  max_requests: 0

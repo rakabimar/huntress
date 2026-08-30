@@ -1,0 +1,7 @@
+name: false-positive-source-dataflow-analysis
+input: "A user selects a provider enum that is converted to one of three constant HTTPS URLs before the HTTP client call. A scanner reports SSRF. Decide whether a controllable URL reaches the sink."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

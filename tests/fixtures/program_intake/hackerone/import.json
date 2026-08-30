@@ -1,0 +1,80 @@
+{
+  "program": {
+    "data": {
+      "id": "42",
+      "type": "program",
+      "attributes": {
+        "handle": "acme",
+        "name": "ACME Security",
+        "currency": "usd",
+        "policy": "Automated scanners are allowed as long as they do not cause excessive traffic. Do not perform denial of service. Race condition testing is allowed. Only test accounts you own. Use X-Researcher: <username> for all requests.",
+        "submission_state": "open",
+        "state": "public_mode",
+        "offers_bounties": true,
+        "gold_standard_safe_harbor": true
+      }
+    }
+  },
+  "scopes": [
+    {
+      "id": "101",
+      "type": "structured-scope",
+      "attributes": {
+        "asset_identifier": "api-old.example.test",
+        "asset_type": "DOMAIN",
+        "eligible_for_submission": true,
+        "eligible_for_bounty": true,
+        "instruction": "Primary API",
+        "max_severity": "critical",
+        "created_at": "2026-01-01T00:00:00Z",
+        "updated_at": "2026-01-01T00:00:00Z",
+        "reference": "H00101"
+      }
+    },
+    {
+      "id": "102",
+      "type": "structured-scope",
+      "attributes": {
+        "asset_identifier": "https://www.example.test/api/*",
+        "asset_type": "URL",
+        "eligible_for_submission": true,
+        "eligible_for_bounty": false,
+        "instruction": "Reports accepted; no bounty",
+        "max_severity": "high"
+      }
+    },
+    {
+      "id": "103",
+      "type": "structured-scope",
+      "attributes": {
+        "asset_identifier": "admin.example.test",
+        "asset_type": "DOMAIN",
+        "eligible_for_submission": false,
+        "eligible_for_bounty": false,
+        "instruction": "Not eligible for submission"
+      }
+    },
+    {
+      "id": "104",
+      "type": "structured-scope",
+      "attributes": {
+        "asset_identifier": "com.acme.mobile",
+        "asset_type": "ANDROID",
+        "eligible_for_submission": true,
+        "eligible_for_bounty": true
+      }
+    }
+  ],
+  "exclusions": [
+    {
+      "id": "201",
+      "type": "scope-exclusion",
+      "attributes": {
+        "category": "Self-XSS",
+        "details": "Self-XSS without impact is excluded",
+        "created_at": "2026-01-01T00:00:00Z",
+        "updated_at": "2026-01-01T00:00:00Z"
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+name: realistic-session-management-false-positive
+input: "Logout removes the browser cookie and an old JWT still decodes locally, but protected replay returns unauthorized."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

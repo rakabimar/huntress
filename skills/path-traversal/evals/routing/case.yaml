@@ -1,0 +1,7 @@
+name: route-path-traversal
+input: "A download error includes the supplied ../ filename; no out-of-root bytes are returned."
+expected:
+  selected_skill: path-traversal
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

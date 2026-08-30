@@ -1,0 +1,7 @@
+name: centralized-safe-sibling-is-not-variant
+input: "A text search finds route C without requireOwner, but its controller calls updateOwnedRecord(), which enforces tenant ownership before every mutation."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

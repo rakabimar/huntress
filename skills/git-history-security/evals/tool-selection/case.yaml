@@ -1,0 +1,6 @@
+name: tool-git-history-security
+input: "A removed ownership check is found in git log. Choose log, show, blame, symbol callers, exact sibling search and structural search progressively."
+expected:
+  tool_selection: none
+  evidence_required: true
+  max_requests: 0

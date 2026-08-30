@@ -1,0 +1,11 @@
+name: complex-source-audit-context
+input: "A plugin host accepts uploaded extensions, schedules background jobs, and exposes admin and tenant APIs. Model component boundaries, privileged operations, plugin trust, stores, callers, and invariants without executing the plugin."
+expected:
+  route: source-audit-context
+  hypothesis: "Create a source observation or Lead only after reachability and the security invariant are credible."
+  refuting_observation: "A guard, safe wrapper, unreachable path, fixture status, or version mismatch disproves applicability."
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  source_runtime_correlation: required_when_hosted
+  max_requests: 0

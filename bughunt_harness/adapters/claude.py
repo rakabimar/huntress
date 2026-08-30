@@ -55,6 +55,8 @@ def settings_json() -> dict:
         "Read(~/.aws/**)",
         "Read(~/.gnupg/**)",
         "Read(~/.netrc)",
+        "WebFetch",
+        "WebSearch",
         # No raw database manipulation — state is mutated via the harness API.
         "Bash(sqlite3:*)",
         "Bash(* .db *)**",
@@ -79,7 +81,10 @@ def settings_json() -> dict:
     hooks = {
         "SessionStart": [_hook(None, "session-start", 30)],
         "UserPromptSubmit": [_hook(None, "user-prompt-submit", 10)],
-        "PreToolUse": [_hook("Bash", "pre-tool-use", 10)],
+        "PreToolUse": [
+            _hook("Bash", "pre-tool-use", 10),
+            _hook("mcp__playwright.*", "pre-tool-use", 10),
+        ],
         "PostToolUse": [_hook(None, "post-tool-use", 10)],
         "PostToolUseFailure": [_hook(None, "post-tool-use", 10)],
         "Stop": [_hook(None, "stop", 30)],
@@ -89,10 +94,9 @@ def settings_json() -> dict:
     return {
         "permissions": {"allow": allow, "deny": deny},
         "hooks": hooks,
-        # P0.11: network boundary.  Out of the box the model may only reach
-        # loopback + reserved test TLDs directly; every in-scope target must go
-        # through the request broker (a separate process, not subject to this
-        # sandbox).  Per-program scope domains are appended by `session_bind`.
+        # Broker-only egress boundary.  The model process may reach only local
+        # integration planes; real targets are never copied from scope into
+        # this allowlist.  The broker is a separate, policy-gated process.
         "sandbox": {
             "enabled": True,
             "filesystem": {
@@ -105,10 +109,7 @@ def settings_json() -> dict:
                     "localhost",
                     "*.localhost",
                     "127.0.0.1",
-                    "::1",
-                    "*.test",
-                    "*.invalid",
-                    "*.example",
+                    "[::1]",
                 ],
                 "deniedDomains": [],
             },
@@ -215,8 +216,9 @@ def session_bind(
     """Write the per-program isolation binding for the active session.
 
     Grants read/edit for `workspace` (via additionalDirectories), denies every
-    *other* program workspace plus all secret locations, and narrows the network
-    sandbox to the program's in-scope hosts (P0.11: egress boundary).
+    *other* program workspace plus all secret locations.  ``allowed_domains``
+    is retained only as a source-compatible argument and is intentionally
+    ignored: target scope must never become direct model-process egress.
     """
     cfg = config or get_config()
     deny: list[str] = []
@@ -235,17 +237,14 @@ def session_bind(
         "Read(~/.gnupg/**)",
         "Read(~/.bughunt/registry.db)",
     ]
-    # In-scope egress allowlist: loopback/reserved fixtures are always reachable
-    # (fixtures, mock servers); real targets come from the program's scope.
+    # Only loopback integration endpoints.  In-scope public domains are still
+    # blocked so curl/requests/fetch cannot bypass the Request Broker.
     egress = [
         "localhost",
         "*.localhost",
         "127.0.0.1",
-        "::1",
-        "*.test",
-        "*.invalid",
-        "*.example",
-    ] + [d for d in (allowed_domains or []) if d not in ("localhost", "127.0.0.1", "::1")]
+        "[::1]",
+    ]
     doc = {
         "permissions": {"additionalDirectories": [str(workspace)], "deny": deny},
         "sandbox": {

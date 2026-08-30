@@ -1,0 +1,29 @@
+version: 1
+servers:
+  harness:
+    transport: stdio
+    command: ./harness
+    args: [mcp, serve]
+    required: true
+    responsibility: controlled state and active HTTP execution plane
+
+  burp:
+    transport: sse
+    endpoint: http://127.0.0.1:9876
+    responsibility: scoped read-oriented traffic observation plane
+    expose_via: harness_scope_filter
+    enabled_tools:
+      - get_proxy_http_history
+      - get_proxy_http_history_regex
+      - get_proxy_websocket_history
+      - get_proxy_websocket_history_regex
+      - get_organizer_items
+      - get_organizer_items_regex
+
+  playwright:
+    transport: stdio
+    package: '@playwright/mcp'
+    version: 0.0.79
+    responsibility: per-program and per-account stateful browser workflow plane
+    per_program_generated: true
+    headed: true

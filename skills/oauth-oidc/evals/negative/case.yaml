@@ -1,0 +1,6 @@
+name: rejects-oauth-oidc-false-positive
+input: "A response looks unusual but there is no protected effect or linked evidence for OAuth/OIDC protocol and identity binding."
+expected:
+  promote_finding: false
+  disposition: reject_or_inconclusive
+

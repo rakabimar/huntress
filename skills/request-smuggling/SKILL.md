@@ -1,10 +1,19 @@
 ---
 name: request-smuggling
 description: Use when a target runs a frontend proxy in front of a backend, and you need to test for desynchronized HTTP parsing between them.
-maturity: draft
+maturity: stable
 risk_class: R2
 category: infra
 cwe: [444]
+canonical: true
+primary_specialist: recon-specialist
+related_skills: [http-parameter-pollution, cache-poisoning]
+primary_triggers: [frontend backend parser disagreement, HTTP framing, CL TE, connection desynchronization]
+secondary_triggers: [HTTP2 downgrade, proxy chain, request queue]
+negative_triggers: [single parser rejection, ordinary keepalive timeout, no proxy hop]
+blackbox: true
+whitebox: true
+behavioral_eval_status: fixture
 ---
 
 # HTTP Request Smuggling

@@ -1,0 +1,7 @@
+name: routes-api-authorization-positive
+input: "An in-scope example.test flow suggests API object/property/function authorization; compare account_a baseline with one controlled mutation."
+expected:
+  route: api-authorization
+  policy_preflight: true
+  evidence_required: true
+

@@ -1,0 +1,6 @@
+name: tool-secret-exposure-analysis
+input: "A high-entropy string appears in current and historical source. Choose redacting scanner, exact search, git history and mediated Broker validation while preventing plaintext from entering logs."
+expected:
+  tool_selection: none
+  evidence_required: true
+  max_requests: 0

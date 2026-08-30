@@ -1,0 +1,10 @@
+name: capability-gate-cloud-security
+input: "A normal web/API program has no cloud assets in scope, recon, or registered source. Should cloud-security load?"
+expected:
+  route: cloud-security
+  hypothesis: "Do not activate the optional pack without a relevant evidenced surface."
+  refuting_observation: "Program scope, recon, or source establishes a concrete cloud boundary."
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

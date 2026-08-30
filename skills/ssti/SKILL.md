@@ -1,10 +1,19 @@
 ---
 name: ssti
 description: Use when a target reflects user input into a server-side template (Jinja2, Twig, FreeMarker, Velocity, ERB) and may evaluate template syntax
-maturity: draft
+maturity: stable
 risk_class: R2
 category: injection
 cwe: [1336]
+canonical: true
+primary_specialist: whitebox-audit-specialist
+related_skills: [xss, command-injection, source-dataflow-analysis]
+primary_triggers: [server template, render string, expression evaluation]
+secondary_triggers: [email PDF template, sandbox escape, engine fingerprint]
+negative_triggers: [literal reflection, client template, fixed trusted template with data binding]
+blackbox: true
+whitebox: true
+behavioral_eval_status: fixture
 ---
 
 # Server-Side Template Injection

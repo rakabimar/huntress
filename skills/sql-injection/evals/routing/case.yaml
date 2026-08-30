@@ -1,0 +1,6 @@
+name: selects-sql-injection
+input: "Plan a bounded test for relational query injection differentials on https://api.example.test using configured test accounts."
+expected:
+  selected_skill: sql-injection
+  target_fixture_only: true
+

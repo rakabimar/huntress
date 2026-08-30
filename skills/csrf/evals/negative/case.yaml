@@ -1,0 +1,8 @@
+name: negative-csrf
+input: "An API requires a bearer header that browsers do not send from an attacker form."
+expected:
+  promote_finding: false
+  disposition: reject_or_inconclusive
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

@@ -1,0 +1,10 @@
+name: difficult-jwt-scenario
+input: "A gateway validates an access token for audience api-a, then service api-b reads raw role claims. The same token gets HTTP 200 at api-b, but no protected api-b action has been demonstrated."
+expected:
+  route: jwt
+  hypothesis: "State one narrow cause-to-protected-effect claim; do not promote yet."
+  refuting_observation: "A control or authoritative postcondition disproves the boundary crossing."
+  evidence_required: true
+  tool_selection: policy_preflight
+  promote_finding: false
+  max_requests: 0

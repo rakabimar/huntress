@@ -1,0 +1,8 @@
+name: evidence-source-authorization-analysis
+input: "A GraphQL mutation delegates through a service and repository scope. Record the route/resolver, identity, role, ownership, tenant controls, confidence, unknowns, and source evidence needed before promotion."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  source_runtime_correlation: required_when_hosted
+  max_requests: 0

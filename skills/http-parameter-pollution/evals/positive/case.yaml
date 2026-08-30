@@ -1,0 +1,8 @@
+name: positive-http-parameter-pollution
+input: "A proxy signature covers the first tenant query value while the application framework appears to use the last. Only source/config evidence exists; no protected operation has run."
+expected:
+  route: http-parameter-pollution
+  evidence_required: true
+  promote_finding: false
+  tool_selection: policy_preflight
+  max_requests: 0

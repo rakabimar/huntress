@@ -1,0 +1,3 @@
+name: validate-independent-review
+input: "A candidate has scope proof, a supported hypothesis, durable differential evidence, and a creator session distinct from the configured validator. Attempt to disprove it."
+expected: {route: validate, evidence_required: true, promote_finding: false, tool_selection: send_authorized_http_request, max_requests: 1}

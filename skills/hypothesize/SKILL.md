@@ -29,9 +29,17 @@ observation that would *refute* it, not merely the one that would confirm it.
    `create_research_test` that records the expected-if-true and expected-if-false.
 
 ## Evidence
+Evidence contract:
 - A hypothesis record linked to a lead.
 - A planned research test whose `expected_if_true` and `expected_if_false` are
   both filled in — a hypothesis without an expected-false case is not falsifiable.
+
+## Tool selection
+
+Use `create_hypothesis` only after the Lead identifies a real boundary. Use
+`create_research_test` for the minimal experiment and its refuting observation.
+Use `policy_preflight` before selecting any active broker request; hypothesis
+craft itself never needs an external request.
 
 ## False positives
 - Correlations ("the 404 page shows the stack trace") are not yet causal claims.

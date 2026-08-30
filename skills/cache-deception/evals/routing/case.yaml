@@ -1,0 +1,7 @@
+name: routing-cache-deception
+input: "Account A requests /profile/me/avatar.css and receives private JSON with X-Cache miss. An anonymous request has not yet established a shared hit."
+expected:
+  selected_skill: cache-deception
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

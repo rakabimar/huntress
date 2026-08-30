@@ -1,0 +1,6 @@
+name: rejects-sql-injection-false-positive
+input: "A response looks unusual but there is no protected effect or linked evidence for relational query injection differentials."
+expected:
+  promote_finding: false
+  disposition: reject_or_inconclusive
+

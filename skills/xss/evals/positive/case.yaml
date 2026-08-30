@@ -1,0 +1,7 @@
+name: routes-xss-positive
+input: "An in-scope example.test flow suggests contextual output encoding and script execution; compare account_a baseline with one controlled mutation."
+expected:
+  route: xss
+  policy_preflight: true
+  evidence_required: true
+

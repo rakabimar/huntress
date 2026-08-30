@@ -1,0 +1,8 @@
+name: positive-websocket
+input: "A foreign channel subscribe returns subscribed, but no event or protected data has arrived."
+expected:
+  route: websocket
+  evidence_required: true
+  promote_finding: false
+  tool_selection: policy_preflight
+  max_requests: 0

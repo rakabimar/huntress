@@ -1,10 +1,19 @@
 ---
 name: race-condition
 description: Use when a resource can be consumed, created, transferred, or credited more than once through concurrent requests, or when rate limits and unique constraints look bypassable by timing.
-maturity: draft
+maturity: stable
 risk_class: R2
 category: business-logic
 cwe: [362]
+canonical: true
+primary_specialist: business-logic-specialist
+related_skills: [business-logic, payment-logic, workflow-bypass]
+primary_triggers: [concurrent state mutation, TOCTOU, one-time consumption, read-modify-write]
+secondary_triggers: [quota, balance, coupon, uniqueness, idempotency]
+negative_triggers: [sequential replay, latency without duplicate state effect, availability-only errors]
+blackbox: true
+whitebox: true
+behavioral_eval_status: fixture
 ---
 
 # Race Conditions / TOCTOU

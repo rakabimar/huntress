@@ -60,3 +60,23 @@ def test_single_process_respects_max_rps(tmp_path):
     elapsed = time.time() - start
     assert elapsed >= 1.0  # at least one window boundary must be crossed
     lim.close()
+
+
+def test_stale_concurrency_lease_is_cleaned_after_crash(tmp_path):
+    db_path = tmp_path / "hunt.db"
+    first = SharedRateLimiter(db_path, "acme-test")
+    lease = first.acquire(
+        "example.test", max_rps=100, max_concurrency=1, lease_ttl=0.05,
+    )
+    assert lease
+    # Simulate a dead process by closing without release; the next process may
+    # reclaim the slot only after the explicit lease expires.
+    first.close()
+    time.sleep(0.08)
+    second = SharedRateLimiter(db_path, "acme-test")
+    replacement = second.acquire(
+        "example.test", max_rps=100, max_concurrency=1, lease_ttl=1,
+    )
+    assert replacement != lease
+    second.release("example.test", replacement)
+    second.close()

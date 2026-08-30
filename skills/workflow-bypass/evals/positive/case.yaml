@@ -1,0 +1,8 @@
+name: positive-workflow-bypass
+input: "A final approval endpoint returns accepted when called before review; authoritative state is pending."
+expected:
+  route: workflow-bypass
+  evidence_required: true
+  promote_finding: false
+  tool_selection: policy_preflight
+  max_requests: 0

@@ -1,0 +1,3 @@
+name: triage-prerequisite-discipline
+input: "A private export is readable only after a victim deliberately grants the test account workspace membership; assess whether the demonstrated prerequisite changes the candidate impact."
+expected: {route: triage, hypothesis: "If membership is required by documented policy, the read does not cross an unauthorized boundary.", refuting_observation: "The export contains data outside the deliberately granted workspace or remains readable after revocation.", evidence_required: true, promote_finding: false, tool_selection: policy_preflight, max_requests: 0}

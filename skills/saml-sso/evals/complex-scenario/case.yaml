@@ -1,0 +1,10 @@
+name: complex-scenario-saml-sso
+input: "The SP supports two IdPs. Both controlled accounts have the same email. One assertion preview selects the same local profile, but the ACS has not issued a session."
+expected:
+  route: saml-sso
+  hypothesis: "One exact boundary hypothesis; do not promote from the observation."
+  refuting_observation: "The safe/intended control or absent protected effect disproves it."
+  evidence_required: true
+  promote_finding: false
+  tool_selection: policy_preflight
+  max_requests: 0

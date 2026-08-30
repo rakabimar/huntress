@@ -1,0 +1,8 @@
+name: positive-source-dataflow-analysis
+input: "A webhook header reaches an XML parser with external entities enabled before any signature verification, and the result controls a state mutation. Trace attacker influence, checks, sink semantics, and minimal safe validation."
+expected:
+  route: source-dataflow-analysis
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

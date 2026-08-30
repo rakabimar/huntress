@@ -55,14 +55,16 @@ def test_settings_json_modern_hook_events():
 
 
 def test_settings_json_network_sandbox_boundary():
-    # P0.11: default egress is restricted to loopback + reserved test TLDs via a
-    # strict allowlist; real targets must go through the broker.
+    # P0.11: direct runtime egress is loopback-only; even in-scope targets go
+    # through the broker.
     s = claude.settings_json()
     net = s["sandbox"]["network"]
     assert net["strictAllowlist"] is True
     assert net["allowLocalBinding"] is True
-    for host in ("localhost", "127.0.0.1", "*.test", "*.invalid", "*.example"):
+    for host in ("localhost", "127.0.0.1", "[::1]"):
         assert host in net["allowedDomains"]
+    for host in ("*.test", "*.invalid", "*.example"):
+        assert host not in net["allowedDomains"]
     assert "evil.org" not in net["allowedDomains"]
     assert net["deniedDomains"] == []
 
@@ -76,8 +78,8 @@ def test_session_bind_writes_egress_allowlist(tmp_path, monkeypatch):
     )
     doc = json.loads(path.read_text(encoding="utf-8"))
     allowed = doc["sandbox"]["network"]["allowedDomains"]
-    assert "api.example.com" in allowed
-    assert "*.example.com" in allowed
+    assert "api.example.com" not in allowed
+    assert "*.example.com" not in allowed
     assert "localhost" in allowed  # loopback fixtures always reachable
     assert doc["sandbox"]["network"]["strictAllowlist"] is True
 
@@ -96,6 +98,14 @@ def test_agent_specs_load_and_render():
             rendered = s.render(runtime)
             assert s.name in rendered
             assert len(rendered.strip()) > 0
+
+
+def test_claude_agent_mcp_tool_permissions_use_runtime_names():
+    validator = next(spec for spec in load_specs() if spec.name == "finding-validator")
+    rendered = validator.render("claude")
+    assert "mcp__bughunt__get_finding_validation_bundle" in rendered
+    assert "mcp__bughunt__submit_validation_review" in rendered
+    assert "tools: get_finding" not in rendered
 
 
 def test_agents_md_inlines_core():

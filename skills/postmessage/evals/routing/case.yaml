@@ -1,0 +1,7 @@
+name: route-postmessage
+input: "A receiver lacks event.origin validation and updates a DOM status label only."
+expected:
+  selected_skill: postmessage
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

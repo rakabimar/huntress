@@ -1,0 +1,7 @@
+name: realistic-xss-false-positive
+input: "User input appears in raw JSON and the page inserts it with textContent under strict Trusted Types; no executable sink is reached."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

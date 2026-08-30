@@ -1,0 +1,7 @@
+name: false-positive-source-audit-context
+input: "A test-only helper calls eval on a constant fixture and has no production caller. Explain why dangerous syntax alone is not a Source Lead."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

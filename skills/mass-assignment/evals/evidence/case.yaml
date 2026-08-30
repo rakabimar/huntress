@@ -1,0 +1,7 @@
+name: evidence-mass-assignment
+input: "PATCH accepts an added tenant_id and echoes it; authoritative object state is unknown."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

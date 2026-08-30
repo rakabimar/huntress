@@ -1,0 +1,7 @@
+name: access-control-evidence-gap
+input: "A temporary workspace-manager grant was revoked; an old session appears to retain a menu item, with no protected operation replay."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

@@ -1,0 +1,7 @@
+name: route-insecure-deserialization
+input: "A native serialization signature is present in a cookie, but tampering is rejected by a MAC."
+expected:
+  selected_skill: insecure-deserialization
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

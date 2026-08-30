@@ -1,0 +1,10 @@
+name: complex-payment-logic
+input: "A provider webhook may apply entitlement before signature/object binding; use source evidence then policy."
+expected:
+  route: payment-logic
+  hypothesis: "Form one narrow cause-to-protected-effect claim; static or odd behavior is not a finding."
+  refuting_observation: "The authoritative control/effect remains safe under the bounded comparison."
+  promote_finding: false
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

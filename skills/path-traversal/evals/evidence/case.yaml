@@ -1,0 +1,7 @@
+name: evidence-path-traversal
+input: "A download error includes the supplied ../ filename; no out-of-root bytes are returned."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

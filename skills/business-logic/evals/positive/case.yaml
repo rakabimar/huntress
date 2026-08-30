@@ -1,0 +1,7 @@
+name: routes-business-logic-positive
+input: "An in-scope example.test flow suggests workflow and business invariant enforcement; compare account_a baseline with one controlled mutation."
+expected:
+  route: business-logic
+  policy_preflight: true
+  evidence_required: true
+

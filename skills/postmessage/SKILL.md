@@ -1,10 +1,19 @@
 ---
 name: postmessage
 description: Use when a page uses window.postMessage / onmessage across iframes, embeds, or cross-origin frames, or trusts a message's content without an origin check
-maturity: draft
+maturity: stable
 risk_class: R2
 category: client-side
 cwe: [345]
+canonical: true
+primary_specialist: client-side-specialist
+related_skills: [xss, authentication, client-reverse]
+primary_triggers: [postMessage, message event, iframe, popup, targetOrigin]
+secondary_triggers: [event origin, event source, token handoff, embedded widget]
+negative_triggers: [strict origin and source checks, inert message, unreachable attacker origin]
+blackbox: true
+whitebox: true
+behavioral_eval_status: fixture
 ---
 
 # PostMessage Origin-Check Misconfiguration

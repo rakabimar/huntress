@@ -13,6 +13,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 from bughunt_harness.cvss.engine import score_vector
+from bughunt_harness.cvss.reasoning import score_with_reasoning
 from bughunt_harness.engagement.models import (
     AccountsModel,
     Engagement,
@@ -26,7 +27,7 @@ from bughunt_harness.engagement.models import (
 from bughunt_harness.engagement.workspace import create_workspace, save_engagement
 from bughunt_harness.hunt import load_program_context
 from bughunt_harness.registry import ProgramRegistry
-from bughunt_harness.reporting.poc import PoC
+from bughunt_harness.reporting.poc import PoC, run_poc_qa
 from bughunt_harness.reporting.qa import run_qa
 from bughunt_harness.reporting.report import ReportData
 
@@ -81,12 +82,17 @@ def test_end_to_end_pipeline(config):
     with load_program_context(SLUG, config) as ctx:
         db = ctx.db
         assert ctx.record.status == "active"
+        researcher = db.start_session("pytest", "researcher", SLUG)
+        validator = db.start_session("pytest", "finding-validator", SLUG)
 
         # 1. Broker: in-scope local roundtrip produces durable evidence.
         server = _serve()
         try:
             port = server.server_address[1]
-            r = ctx.broker().execute(target=f"http://127.0.0.1:{port}/ok", action="read_http")
+            r = ctx.broker().execute(
+                target=f"http://127.0.0.1:{port}/ok", action="read_http",
+                session_id=researcher.id,
+            )
         finally:
             server.shutdown()
             server.server_close()
@@ -117,31 +123,67 @@ def test_end_to_end_pipeline(config):
             lead_id=lead.id,
             hypothesis_id=hyp.id,
             test_ids=[test.id],
+            creator_session_id=researcher.id,
         )
         assert f.lead_id == lead.id and f.hypothesis_id == hyp.id and f.test_ids == [test.id]
 
         # 4. Validation-review workflow → validated (P0.7: no direct jump).
         db.transition_finding(f.id, "validation")
-        review = db.begin_validation(f.id, requested_by="e2e", reviewer_type="validator")
-        db.submit_validation_review(review.id, "supported", reasoning_summary="reproducible from evidence")
-        validated = db.finalize_validation(f.id)
+        review = db.begin_validation(f.id, requested_by="e2e", reviewer_type="finding-validator")
+        checks = {
+            "scope_eligible": {"passed": True}, "reproducible": {"passed": True},
+            "prerequisites": {"value": "synthetic fixture access"},
+            "security_boundary": {"value": "fixture output boundary"},
+            "attacker_control": {"value": "request path marker"},
+            "demonstrated_impact": {"value": f.impact_summary},
+            "intended_behavior": {"passed": True},
+            "false_positive_analysis": {"passed": True},
+            "evidence_quality": {"passed": True}, "minimal_impact": {"passed": True},
+            "program_exclusions": {"passed": True},
+        }
+        db.submit_validation_review(
+            review.id, "supported", reasoning_summary="reproducible from linked evidence",
+            check_results=checks, evidence_refs=f.evidence_refs,
+            reviewer_role="finding-validator", reviewer_session_id=validator.id,
+        )
+        validated = db.finalize_validation(
+            f.id, scope_engine=ctx.scope, program_active=True,
+        )
         assert validated.status == "validated"
 
         # 5. PoC documentation + validated -> poc_ready.
         poc = PoC(
             prerequisites=["a browser or the harness broker"],
+            account_setup="unauthenticated local fixture",
             baseline_behavior="plain 200 response",
             controlled_change="inject marker into target path",
             reproduction_steps=["send GET http://127.0.0.1:<port>/<marker> via broker"],
             observed_result="marker is reflected in the response body",
             impact_verification="reflection demonstrates unescaped output",
         )
+        poc_qa = run_poc_qa(poc, evidence_refs=f.evidence_refs, finding_status=validated.status)
+        assert poc_qa.passed, poc_qa.issues
+        poc_dir = ctx.workspace / "poc"
+        poc_dir.mkdir(parents=True, exist_ok=True)
+        poc_path = poc_dir / f"{f.public_id}.md"
+        poc_path.write_text(poc.render(), encoding="utf-8")
+        db.set_finding_poc_path(f.id, str(poc_path))
         poc_ready = db.transition_finding(f.id, "poc_ready")
         assert poc_ready.status == "poc_ready"
 
         # 6. CVSS scoring + poc_ready -> scored (calculator, not hand arithmetic).
-        scored_vec = score_vector("CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:L/A:N")
-        db.set_finding_cvss(f.id, scored_vec.as_dict())
+        vector = "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:L/A:N"
+        reasoning = {
+            metric: {
+                "value": value,
+                "rationale": f"Fixture evidence supports {metric}={value} without class-based scoring.",
+                "evidence_refs": [r.evidence_id],
+                "uncertainty": "none",
+            }
+            for metric, value in (part.split(":", 1) for part in vector.split("/")[1:])
+        }
+        scored_data = score_with_reasoning(vector, reasoning, finding_evidence=f.evidence_refs)
+        db.set_finding_cvss(f.id, scored_data)
         scored = db.transition_finding(f.id, "scored")
         assert scored.status == "scored"
 
@@ -152,7 +194,8 @@ def test_end_to_end_pipeline(config):
             affected_asset=f"127.0.0.1:{port}",
             weakness="Improper Output Neutralization",
             severity="Low",
-            cvss_vector=scored_vec.vector,
+            cvss_vector=scored_data["vector"],
+            prerequisites=["local synthetic fixture"],
             steps=["Send GET /<marker> to the endpoint via the broker"],
             poc=poc.render(),
             expected_result="marker is encoded or stripped",
@@ -168,6 +211,10 @@ def test_end_to_end_pipeline(config):
         out = rep_dir / f"{scored.public_id}.md"
         out.write_text(report.render(), encoding="utf-8")
         assert out.is_file() and "## Evidence" in out.read_text(encoding="utf-8")
+        db.set_finding_report_path(f.id, str(out))
+        report_ready = db.transition_finding(f.id, "report_ready")
+        qa_passed = db.transition_finding(f.id, "qa_passed")
+        assert report_ready.status == "report_ready" and qa_passed.status == "qa_passed"
 
 
 def test_cli_cvss_smoke(capsys):

@@ -13,6 +13,8 @@ categories:
       - observe
       - hypothesize
       - research-loop
+      - feature-threat-model
+      - exploit-chain-analysis
       - attack
       - defend
       - triage
@@ -22,7 +24,7 @@ categories:
   injection:
     label: Injection
     skills:
-      - sqli
+      - sql-injection
       - nosqli
       - command-injection
       - xss
@@ -34,12 +36,19 @@ categories:
   authnz:
     label: Authentication & authorization
     skills:
-      - authn-bypass
-      - jwt-misuse
-      - oauth-misuse
-      - idor
+      - authentication
+      - jwt
+      - oauth-oidc
+      - api-authorization
+      - access-control
       - privilege-escalation
       - session-fixation
+      - session-management
+
+  api:
+    label: API and GraphQL
+    skills:
+      - graphql
 
   business-logic:
     label: Business logic
@@ -80,6 +89,7 @@ categories:
       - request-smuggling
       - host-header
       - cache-poisoning
+      - cache-deception
 
   crypto-config:
     label: Cryptography & configuration
@@ -94,3 +104,37 @@ categories:
     skills:
       - recon-passive
       - api-enumeration
+
+  whitebox:
+    label: Commit-pinned source and open-source security research
+    skills:
+      - source-audit-context
+      - source-dataflow-analysis
+      - source-authorization-analysis
+      - git-history-security
+      - differential-security-review
+      - variant-analysis
+      - dependency-reachability
+      - secret-exposure-analysis
+
+  protocol:
+    label: Identity, messaging, and parser protocols
+    skills:
+      - saml-sso
+      - webhook-security
+      - http-parameter-pollution
+      - grpc-security
+
+  platform:
+    label: Capability-gated platform surfaces
+    skills:
+      - cicd-security
+      - cloud-security
+      - llm-ai-security
+      - client-reverse
+      - mobile-security
+
+  specialized:
+    label: Optional local specialized research
+    skills:
+      - fuzzing

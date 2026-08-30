@@ -1,0 +1,7 @@
+name: routes-access-control-positive
+input: "An in-scope example.test flow suggests horizontal, vertical, contextual, and tenant access control; compare account_a baseline with one controlled mutation."
+expected:
+  route: access-control
+  policy_preflight: true
+  evidence_required: true
+

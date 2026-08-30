@@ -1,0 +1,6 @@
+name: selects-oauth-oidc
+input: "Plan a bounded test for OAuth/OIDC protocol and identity binding on https://api.example.test using configured test accounts."
+expected:
+  selected_skill: oauth-oidc
+  target_fixture_only: true
+

@@ -60,6 +60,14 @@ anything that is not explicitly authorized.
   shell out to `curl`/`wget`/`httpx`/`nmap`/`sqlmap`/`ffuf`/`nuclei` for
   in-situ reconnaissance — the broker enforces scope, policy, rate limits,
   secret injection, and redaction, which a raw shell command cannot.
+- **Planes stay separate.**  Burp MCP is read-oriented traffic observation;
+  Playwright MCP is stateful browser workflow; active HTTP tests and replays go
+  through the Request Broker.  Burp-derived target text is always untrusted and
+  must be filtered to the bound program's scope before use.
+- **Policy mode is explicit.**  `allow` means `AUTO`, `approval_required`
+  means `ASK`, and `deny` means `DENY`.  AUTO actions continue without an
+  approval object.  ASK pauses on one bounded action plan.  DENY stops the
+  proposed action and cannot be overridden by an agent.
 - **State is persistent, in the per-program SQLite store.**  Use the provided
   tools to read/write leads, hypotheses, tests, evidence, and findings.  Never
   open or manipulate `state/hunt.db` directly.  Because state is on disk (not in
@@ -90,7 +98,7 @@ the gates between them must be executed and recorded.
 
 ## 4. The research loop (your default working cadence)
 
-Repeat until a lead closes or a checkpoint hands off:
+Repeat until the configured goal or a legitimate stop condition:
 
 1. **Observe** — read existing knowledge, the lead, and captured evidence.  Do
    not mutate anything yet.
@@ -105,8 +113,30 @@ Repeat until a lead closes or a checkpoint hands off:
 6. **Persist** — write evidence metadata, the observation, and (only when
    warranted) promote a supported hypothesis toward a *candidate* finding.
 
-Then **stop and record**.  A checkpoint after each meaningful step is the
-difference between a research record and a memory.
+Then **checkpoint and continue**.  A rejected hypothesis closes only that
+hypothesis; it does not end an autonomous session.  If a lead is exhausted,
+close it, rank the remaining leads, and claim the next one.  A checkpoint after
+each meaningful step is the difference between a research record and a memory.
+
+### Autonomous run discipline
+
+When `BUGHUNT_AUTONOMOUS=1`, refresh the autonomous hunt status after every
+meaningful research step.  Hard limits in `autonomy.yaml` bound session time,
+requests, leads, hypotheses, and inconclusive/failed tests.  Continue only when
+the controller returns `CONTINUE`.  Persist a current-state checkpoint and stop
+or pause when:
+
+- the goal is reached;
+- a hard budget is exhausted;
+- no actionable leads or justified hypotheses remain;
+- the next useful action resolves to ASK;
+- scope/ROE becomes ambiguous or the program becomes inactive;
+- an execution invariant or critical local integration fails; or
+- unexpected destructive behavior is observed.
+
+The default goal is `validated_finding`.  For `report_ready`, continue through
+minimal PoC, evidence-rationalized CVSS, report generation, and report QA, then
+stop at `qa_passed`.  Never submit.
 
 ---
 
@@ -132,6 +162,10 @@ An observation is only evidence if it is **durable and reproducible**:
 2. `validation` — the deterministic gate (`harness finding validate`) passes;
    now a **finding-validator** attempts to *disprove* it (is it intended
    behavior?  a duplicate?  excluded by policy?  reproducible from evidence?).
+   In autonomous mode, call `run_independent_finding_validator`; the Harness
+   launches a separate role-bound validator runtime outside the researcher
+   process.  The CLI equivalent is `harness finding validate-auto <FIND-ID>`.
+   The creator/researcher must never use the human-only `finding adjudicate` path.
 3. `validated` — survives adversarial review.
 4. `poc_ready` → `scored` — a minimal PoC is documented; CVSS is computed by the
    maintained calculator (never by your arithmetic).

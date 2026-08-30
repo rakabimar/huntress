@@ -1,0 +1,7 @@
+name: evidence-csrf
+input: "A cross-site form receives 302 after submitting an email change; account state is unknown."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

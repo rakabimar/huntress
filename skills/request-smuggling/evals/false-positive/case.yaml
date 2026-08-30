@@ -1,0 +1,7 @@
+name: false-positive-request-smuggling
+input: "One ambiguous request receives 400 and the connection closes normally."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

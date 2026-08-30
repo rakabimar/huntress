@@ -32,9 +32,18 @@ Observation is data; it becomes a vulnerability only after this loop survives.
    supported hypothesis toward a candidate finding.
 
 ## Evidence
+Evidence contract:
 - A planned test moved to `executed`, with an observation that matches the
   recorded prediction (or an honest mismatch).
 - A checkpoint (`save_checkpoint`) after each meaningful step.
+
+## Decision tree
+
+Choose the highest-information permitted next action. If a result refutes the
+hypothesis, reject it rather than spending more budget. If repeated results are
+inconclusive, rotate to another Lead. If evidence weakens, do not let sunk cost
+justify another request. If the next differentiating action is ASK, checkpoint
+and pause; if no differentiating action remains, stop.
 
 ## False positives
 - "I got a weird response" without a prior prediction is not a test result — it

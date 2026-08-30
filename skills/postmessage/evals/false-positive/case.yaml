@@ -1,0 +1,7 @@
+name: false-positive-postmessage
+input: "targetOrigin is wildcard for a public resize notification with no sensitive data/action."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

@@ -1,0 +1,7 @@
+name: realistic-ssrf-false-positive
+input: "A link-preview page triggers the researcher's browser to fetch the supplied URL; server logs show no application-originated request."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

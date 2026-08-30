@@ -1,0 +1,8 @@
+name: positive-source-audit-context
+input: "A FastAPI repository contains routes, JWT middleware, a tenant-scoped service, a queue consumer, and an archive importer. Produce the commit-pinned security architecture and unresolved questions before hunting."
+expected:
+  route: source-audit-context
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

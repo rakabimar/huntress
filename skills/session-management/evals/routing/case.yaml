@@ -1,0 +1,6 @@
+name: selects-session-management
+input: "Plan a bounded test for session creation, rotation, expiry, and revocation on https://api.example.test using configured test accounts."
+expected:
+  selected_skill: session-management
+  target_fixture_only: true
+

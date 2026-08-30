@@ -1,0 +1,8 @@
+name: positive-differential-security-review
+input: "Commit B changes authorizeWorkspace() to accept an optional principal; one legacy caller passes none while all updated callers pass the authenticated principal. Identify the security blast radius and regression hypothesis."
+expected:
+  route: differential-security-review
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

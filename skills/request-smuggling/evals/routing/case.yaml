@@ -1,0 +1,7 @@
+name: route-request-smuggling
+input: "A proxy chain normalizes Transfer-Encoding differently in source/config; no probe has run."
+expected:
+  selected_skill: request-smuggling
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

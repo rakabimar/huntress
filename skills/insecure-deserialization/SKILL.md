@@ -1,10 +1,19 @@
 ---
 name: insecure-deserialization
 description: Use when a target deserializes untrusted input into native objects (Java/PHP/.NET) or signed/encrypted tokens that can be tampered to trigger type confusion.
-maturity: draft
+maturity: stable
 risk_class: R2
 category: crypto-config
 cwe: [502]
+canonical: true
+primary_specialist: whitebox-audit-specialist
+related_skills: [source-dataflow-analysis, authentication, command-injection]
+primary_triggers: [native object deserialization, polymorphic type, serialized blob]
+secondary_triggers: [gadget reachability, signed object, message queue, plugin input]
+negative_triggers: [safe data-only parser, rejected signature, dangerous class unreachable]
+blackbox: true
+whitebox: true
+behavioral_eval_status: fixture
 ---
 
 # Insecure Deserialization

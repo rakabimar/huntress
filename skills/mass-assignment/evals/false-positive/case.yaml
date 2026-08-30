@@ -1,0 +1,7 @@
+name: false-positive-mass-assignment
+input: "The API preserves unknown fields only in a user-owned metadata map with no security consumer."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

@@ -32,6 +32,23 @@ from bughunt_harness.engagement.models import (  # noqa: E402
 from bughunt_harness.state.db import HuntDB  # noqa: E402
 
 
+_INTEGRATION_LOCAL_MODULES = {
+    "test_autonomous_synthetic.py", "test_e2e.py", "test_source.py",
+    "test_whitebox_e2e.py", "test_broker.py", "test_broker_hardening.py",
+}
+
+
+def pytest_collection_modifyitems(items):
+    """Attach one primary deterministic category to every collected test."""
+    for item in items:
+        if item.get_closest_marker("model") or item.get_closest_marker("external_tool"):
+            continue
+        if item.path.name in _INTEGRATION_LOCAL_MODULES:
+            item.add_marker(pytest.mark.integration_local)
+        else:
+            item.add_marker(pytest.mark.unit)
+
+
 @pytest.fixture
 def config(tmp_path) -> HarnessConfig:
     """An isolated global home + programs dir under a temp tree."""

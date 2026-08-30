@@ -1,0 +1,7 @@
+name: realistic-file-upload-false-positive
+input: "An SVG uploads successfully but is renamed, sanitized, served as attachment from an isolated origin, and cannot execute in the app origin."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

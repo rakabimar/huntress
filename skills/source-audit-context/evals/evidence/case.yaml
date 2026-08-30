@@ -1,0 +1,8 @@
+name: evidence-source-audit-context
+input: "A Rails monolith has controllers, ActiveJob workers, policy classes, serializers, and S3 integration. Specify the provenance needed for a durable architecture summary and invariant."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  source_runtime_correlation: required_when_hosted
+  max_requests: 0

@@ -1,0 +1,10 @@
+name: difficult-authentication-scenario
+input: "Two IdPs return the same verified email for different controlled subjects. The app displays the same email, but it is unknown whether either subject maps to the other's local account."
+expected:
+  route: authentication
+  hypothesis: "State one narrow cause-to-protected-effect claim; do not promote yet."
+  refuting_observation: "A control or authoritative postcondition disproves the boundary crossing."
+  evidence_required: true
+  tool_selection: policy_preflight
+  promote_finding: false
+  max_requests: 0

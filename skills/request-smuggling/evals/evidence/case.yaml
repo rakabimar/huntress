@@ -1,0 +1,7 @@
+name: evidence-request-smuggling
+input: "A proxy chain normalizes Transfer-Encoding differently in source/config; no probe has run."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

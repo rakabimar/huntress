@@ -1,0 +1,10 @@
+name: complex-scenario-cicd-security
+input: "A pull_request_target workflow has contents:write, interpolates the PR title into a shell command, then checks out the contributor head SHA."
+expected:
+  route: cicd-security
+  hypothesis: "One exact boundary hypothesis; do not promote from the observation."
+  refuting_observation: "The safe/intended control or absent protected effect disproves it."
+  evidence_required: true
+  promote_finding: false
+  tool_selection: policy_preflight
+  max_requests: 0

@@ -1,0 +1,7 @@
+name: false-positive-ssti
+input: "The expression is evaluated by a browser-side template after the raw response contains it literally."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

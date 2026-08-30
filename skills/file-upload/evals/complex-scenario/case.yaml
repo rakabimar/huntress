@@ -1,0 +1,10 @@
+name: difficult-file-upload-scenario
+input: "A PDF is accepted and later rendered to an image. Its metadata contains a URL, and an OOB DNS event occurs, but attribution to the renderer versus scanner is unknown."
+expected:
+  route: file-upload
+  hypothesis: "State one narrow cause-to-protected-effect claim; do not promote yet."
+  refuting_observation: "A control or authoritative postcondition disproves the boundary crossing."
+  evidence_required: true
+  tool_selection: policy_preflight
+  promote_finding: false
+  max_requests: 0

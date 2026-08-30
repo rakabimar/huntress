@@ -1,0 +1,7 @@
+{
+  "name": "dependency-reachability-fixture",
+  "private": true,
+  "dependencies": {
+    "fixture-parser-with-advisory": "1.0.0"
+  }
+}

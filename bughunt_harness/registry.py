@@ -138,6 +138,32 @@ class ProgramRegistry:
 
             raise ProgramNotFoundError(slug)
 
+    def update_metadata(
+        self, slug: str, *, name: str | None = None, platform: str | None = None,
+        program_url: str | None = None, notes: str | None = None,
+    ) -> ProgramRecord:
+        values: dict[str, str | None] = {}
+        if name is not None:
+            values["name"] = name
+        if platform is not None:
+            if platform not in VALID_PLATFORMS:
+                raise ValueError(f"platform must be one of {VALID_PLATFORMS}")
+            values["platform"] = platform
+        if program_url is not None:
+            values["program_url"] = program_url
+        if notes is not None:
+            values["notes"] = notes
+        if values:
+            assignments = ", ".join(f"{key}=?" for key in values)
+            cur = self._conn.execute(
+                f"UPDATE programs SET {assignments} WHERE slug=?", (*values.values(), slug)
+            )
+            self._conn.commit()
+            if cur.rowcount == 0:
+                from .errors import ProgramNotFoundError
+                raise ProgramNotFoundError(slug)
+        return self.get(slug)
+
     def touch_last_opened(self, slug: str) -> None:
         self._conn.execute("UPDATE programs SET last_opened_at = ? WHERE slug = ?", (utcnow(), slug))
         self._conn.commit()

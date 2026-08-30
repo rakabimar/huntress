@@ -1,0 +1,8 @@
+name: evidence-dependency-reachability
+input: "An OSV match affects a transitive package. Specify manifest, resolved version, affected range, call site, attacker input, deployment version, mitigation and reachability status."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  source_runtime_correlation: required_when_hosted
+  max_requests: 0

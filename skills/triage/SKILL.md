@@ -41,3 +41,11 @@ does the impact actually match the claimed severity?
 ## Stop conditions
 - `scope_preflight` rejects → drop the candidate, do not report.
 - Severity cannot be honestly defended → down-rank or reject, do not fabricate.
+
+## Decision tree and tool selection
+
+If scope fails, reject. If evidence is not reproducible, return to research. If
+intended behavior or a duplicate explains the result, reject. If those checks
+survive, run the deterministic finding gate and use `run_independent_finding_validator`;
+the researcher must not adjudicate its own finding. Use the maintained CVSS
+tool only after impact is demonstrated.

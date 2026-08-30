@@ -1,0 +1,8 @@
+name: evidence-secret-exposure-analysis
+input: "Git history contains a removed private-key block. Specify fingerprinted, redacted evidence for history, public exposure, environment, permissions and rotation status without storing the value."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  source_runtime_correlation: required_when_hosted
+  max_requests: 0

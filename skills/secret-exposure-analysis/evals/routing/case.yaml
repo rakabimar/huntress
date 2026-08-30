@@ -1,0 +1,8 @@
+name: route-secret-exposure-analysis
+input: "A scanner finds a possible webhook secret in a release repository. Decide when secret analysis, git history, runtime applicability and human-approved validation are relevant."
+expected:
+  selected_skill: secret-exposure-analysis
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

@@ -25,6 +25,17 @@ echo "==> Installing dependencies (editable, full extras)"
 "$VENV_PY" -m pip install --upgrade pip >/dev/null
 "$VENV_PY" -m pip install -e '.[full]'
 
+if command -v npm >/dev/null 2>&1; then
+  echo "==> Installing pinned official Playwright MCP package"
+  npm install --ignore-scripts
+else
+  echo "==> npm not found; Playwright MCP will remain unavailable"
+fi
+
+echo "==> Generating runtime configuration"
+"$HERE/harness" init
+"$HERE/harness" sync
+
 echo "==> Verifying runtime binaries"
 for bin in claude codex opencode burpsuite; do
   if command -v "$bin" >/dev/null 2>&1; then
@@ -34,7 +45,7 @@ for bin in claude codex opencode burpsuite; do
   fi
 done
 
-echo "==> Running doctor (readiness check; fails the script if NOT_READY)"
+echo "==> Running doctor (global environment/core readiness)"
 "$HERE/harness" doctor
 
 echo

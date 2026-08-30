@@ -1,0 +1,6 @@
+name: selects-jwt
+input: "Plan a bounded test for JWT verification and claim enforcement on https://api.example.test using configured test accounts."
+expected:
+  selected_skill: jwt
+  target_fixture_only: true
+

@@ -1,0 +1,6 @@
+name: tool-payment-logic
+input: "A provider webhook may apply entitlement before signature/object binding; use source evidence then policy."
+expected:
+  tool_selection: policy_preflight
+  evidence_required: true
+  max_requests: 0

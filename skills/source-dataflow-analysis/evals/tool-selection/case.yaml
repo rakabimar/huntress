@@ -1,0 +1,6 @@
+name: tool-source-dataflow-analysis
+input: "A direct subprocess call is found in one handler, but input origin is unknown. Select the cheapest sequence of exact references, AST callers, structural matching, and sandbox reproducer."
+expected:
+  tool_selection: none
+  evidence_required: true
+  max_requests: 0

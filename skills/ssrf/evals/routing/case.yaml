@@ -1,0 +1,6 @@
+name: selects-ssrf
+input: "Plan a bounded test for server-side URL fetching and network boundary behavior on https://api.example.test using configured test accounts."
+expected:
+  selected_skill: ssrf
+  target_fixture_only: true
+

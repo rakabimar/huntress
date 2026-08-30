@@ -1,0 +1,7 @@
+name: routes-graphql-positive
+input: "An in-scope example.test flow suggests GraphQL resolver and field authorization; compare account_a baseline with one controlled mutation."
+expected:
+  route: graphql
+  policy_preflight: true
+  evidence_required: true
+

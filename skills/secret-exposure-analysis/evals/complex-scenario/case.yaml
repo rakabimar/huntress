@@ -1,0 +1,11 @@
+name: complex-secret-exposure-analysis
+input: "A monorepo contains test tokens, mobile public keys, CI variable names, an old leaked token and one live-looking integration credential. Classify type, environment, exposure, validity unknowns and safe next steps."
+expected:
+  route: secret-exposure-analysis
+  hypothesis: "Create a source observation or Lead only after reachability and the security invariant are credible."
+  refuting_observation: "A guard, safe wrapper, unreachable path, fixture status, or version mismatch disproves applicability."
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  source_runtime_correlation: required_when_hosted
+  max_requests: 0

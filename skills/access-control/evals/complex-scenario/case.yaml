@@ -1,0 +1,10 @@
+name: difficult-access-control-scenario
+input: "A support role may impersonate test users. After impersonation ends, one alternate endpoint still returns 200, but no role-action postcondition has been observed."
+expected:
+  route: access-control
+  hypothesis: "State one narrow cause-to-protected-effect claim; do not promote yet."
+  refuting_observation: "A control or authoritative postcondition disproves the boundary crossing."
+  evidence_required: true
+  tool_selection: policy_preflight
+  promote_finding: false
+  max_requests: 0

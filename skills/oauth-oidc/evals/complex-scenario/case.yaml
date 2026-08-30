@@ -1,0 +1,10 @@
+name: difficult-oauth-oidc-scenario
+input: "During account linking, IdP A and IdP B controlled accounts share an email. A linking preview selects the same local profile, but commit requires re-authentication and has not occurred."
+expected:
+  route: oauth-oidc
+  hypothesis: "State one narrow cause-to-protected-effect claim; do not promote yet."
+  refuting_observation: "A control or authoritative postcondition disproves the boundary crossing."
+  evidence_required: true
+  tool_selection: policy_preflight
+  promote_finding: false
+  max_requests: 0

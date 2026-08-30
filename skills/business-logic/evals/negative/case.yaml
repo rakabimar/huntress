@@ -1,0 +1,6 @@
+name: rejects-business-logic-false-positive
+input: "A response looks unusual but there is no protected effect or linked evidence for workflow and business invariant enforcement."
+expected:
+  promote_finding: false
+  disposition: reject_or_inconclusive
+

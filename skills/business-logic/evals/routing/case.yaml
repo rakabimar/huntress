@@ -1,0 +1,6 @@
+name: selects-business-logic
+input: "Plan a bounded test for workflow and business invariant enforcement on https://api.example.test using configured test accounts."
+expected:
+  selected_skill: business-logic
+  target_fixture_only: true
+

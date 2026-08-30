@@ -1,0 +1,8 @@
+name: route-git-history-security
+input: "A CVE reference appears in history for an archive parser. Decide when to route into RootCause/variant analysis instead of reporting the commit message."
+expected:
+  selected_skill: git-history-security
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

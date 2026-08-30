@@ -1,10 +1,19 @@
 ---
 name: cache-poisoning
-description: Use when testing web cache poisoning or cache deception via unkeyed headers, cookies, or query strings.
-maturity: draft
+description: Use when attacker-controlled unkeyed input may alter a shared cached response; route private-response path confusion to cache-deception.
+maturity: stable
 risk_class: R2
 category: infra
 cwe: [345]
+canonical: true
+primary_specialist: recon-specialist
+related_skills: [cache-deception, host-header, xss, request-smuggling]
+primary_triggers: [shared cache, unkeyed input, cache key mismatch, poisoned variant]
+secondary_triggers: [CDN, normalization, headers, query, cache status]
+negative_triggers: [uncached reflection, correctly keyed variant, private cache]
+blackbox: true
+whitebox: true
+behavioral_eval_status: fixture
 ---
 
 # Web Cache Poisoning
@@ -17,6 +26,10 @@ Web cache poisoning makes a shared cache store attacker-controlled content and l
 - Pages with dynamic content that some inputs do and do not change, suggesting a partial cache key.
 - Responses carrying cache hints (`Age`, `X-Cache`, `Cache-Control`), CDNs, or reverse proxies in the stack.
 - Suspected cache key confusion where a header on the key list is not what the application actually trusts.
+
+Use `cache-deception` instead when the proposed effect is caching a victim's
+private dynamic response under a static-looking path. Poisoning changes shared
+content through an unkeyed input; deception stores the wrong private response.
 
 ## Process
 1. Observe the target surface and note which inputs vary the response but are absent from the cache key.

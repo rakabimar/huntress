@@ -1,0 +1,7 @@
+name: evidence-insecure-deserialization
+input: "A native serialization signature is present in a cookie, but tampering is rejected by a MAC."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

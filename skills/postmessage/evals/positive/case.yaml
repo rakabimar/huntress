@@ -1,0 +1,8 @@
+name: positive-postmessage
+input: "A receiver lacks event.origin validation and updates a DOM status label only."
+expected:
+  route: postmessage
+  evidence_required: true
+  promote_finding: false
+  tool_selection: policy_preflight
+  max_requests: 0

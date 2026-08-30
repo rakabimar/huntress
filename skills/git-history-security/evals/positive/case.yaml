@@ -1,0 +1,8 @@
+name: positive-git-history-security
+input: "A historical fix added tenant binding to one file-download handler while a current sibling still uses the pre-fix loader. Derive the root cause and a focused current-code Lead."
+expected:
+  route: git-history-security
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

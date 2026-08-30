@@ -1,0 +1,3 @@
+name: triage-routing
+input: "A supported hypothesis now needs scope, intended-behavior, reproducibility, duplicate, and impact review before candidate promotion."
+expected: {selected_skill: triage, evidence_required: true, tool_selection: policy_preflight, max_requests: 0}

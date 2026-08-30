@@ -1,0 +1,10 @@
+name: organization-invite-feature-model
+input: "An organization invite can be issued with member or manager role, resent, revoked, and accepted through web or mobile. Source shows two accept handlers and recon confirms both. Model the feature without testing."
+expected:
+  route: feature-threat-model
+  hypothesis: "A revoked or role-modified invite may be accepted through one representation without the same tenant, email, and role binding."
+  refuting_observation: "Both handlers atomically enforce current invite state, tenant, identity, role, expiry, and single use."
+  evidence_required: true
+  tool_selection: none
+  promote_finding: false
+  max_requests: 0

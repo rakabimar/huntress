@@ -1,0 +1,8 @@
+name: negative-mass-assignment
+input: "The API preserves unknown fields only in a user-owned metadata map with no security consumer."
+expected:
+  promote_finding: false
+  disposition: reject_or_inconclusive
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

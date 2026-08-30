@@ -1,0 +1,8 @@
+name: route-source-dataflow-analysis
+input: "A queue message may influence a cloud API resource identifier through two services. Decide when symbols/Semgrep are enough and when type-aware CodeQL is justified."
+expected:
+  selected_skill: source-dataflow-analysis
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

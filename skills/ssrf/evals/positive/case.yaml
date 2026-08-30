@@ -1,0 +1,7 @@
+name: routes-ssrf-positive
+input: "An in-scope example.test flow suggests server-side URL fetching and network boundary behavior; compare account_a baseline with one controlled mutation."
+expected:
+  route: ssrf
+  policy_preflight: true
+  evidence_required: true
+

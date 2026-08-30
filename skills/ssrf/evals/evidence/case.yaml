@@ -1,0 +1,7 @@
+name: ssrf-evidence-gap
+input: "A callback was observed after submitting a URL, but the token was reused across tests and source, redirect, and timing attribution are absent."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

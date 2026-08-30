@@ -1,0 +1,3 @@
+name: triage-supported-candidate
+input: "A cross-account API read was reproduced twice with controlled accounts, full request/response evidence, and private tenant data returned. Decide the next triage step."
+expected: {route: triage, evidence_required: true, promote_finding: false, tool_selection: send_authorized_http_request, max_requests: 1}

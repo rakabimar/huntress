@@ -1,0 +1,1 @@
+{"program":{"name":"Conflict","handle":"conflict","submission_state":"open","policy":"Do not test api.example.test."},"scopes":[{"asset_identifier":"api.example.test","asset_type":"DOMAIN","eligible_for_submission":true,"eligible_for_bounty":true,"instruction":"Do not test this production asset"}]}

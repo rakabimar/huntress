@@ -1,0 +1,8 @@
+name: positive-cache-poisoning
+input: "An unkeyed header changes an origin response; cacheability and clean-hit persistence are unknown."
+expected:
+  route: cache-poisoning
+  evidence_required: true
+  promote_finding: false
+  tool_selection: policy_preflight
+  max_requests: 0

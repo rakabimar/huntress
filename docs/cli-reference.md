@@ -42,7 +42,25 @@ flags. All commands respect `BUGHUNT_HOME`, `BUGHUNT_PROGRAMS_DIR`, and
 
 ## Skills
 
-- `skill {list,validate,eval}`
+- `skill {list,validate,eval}`; `eval --behavioral [--ablation]` is an explicit,
+  optional model run and is not part of pytest.
+
+## Source / white-box
+
+- `source detect|install-guide` — capability status without installing tools.
+- `source add|list|show|update|changes` — program-isolated repository registry,
+  commit pinning, and differential change summary.
+- `source context|search|read` — compact persisted context and bounded static
+  access to untrusted repository data.
+- `source audit --analysis context|authorization|semgrep|codeql|dependencies|secrets`
+  — observations and Source Leads only.
+- `source prepare-dependencies|sandbox|create-codeql-database` — approved offline
+  caches and fixed-template, isolated execution; no generic command string.
+- `source observations|relate-service|map-runtime` — inspect source intelligence,
+  register service evidence, and correlate routes across all recon endpoints.
+
+No source command installs dependencies automatically, enables network by
+default, builds outside the sandbox, or exposes a generic shell.
 
 ## MCP
 
@@ -66,3 +84,9 @@ Exit codes follow `bughunt_harness/errors.py`: 2 = program not found, 3 = no
 active program, 4 = engagement invalid, 5 = approval required, 6 = action
 forbidden, 7 = illegal state transition, 8 = network safety, 9 = program
 inactive.
+
+## Program intake commands
+
+`harness platform status` and `harness platform credential add|list` manage adapter visibility and reference-only credentials.
+
+`harness program import`, `intake-status`, `review`, `ambiguities`, `ambiguity resolve`, `approve-import`, `refresh`, `diff`, and `provenance` implement the human-gated intake lifecycle. `approve-import` is interactive and defaults to no. Agent-facing MCP intentionally has no approval, activation, credential-changing, or ambiguity-resolution tool.

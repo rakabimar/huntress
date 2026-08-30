@@ -1,0 +1,6 @@
+name: rejects-graphql-false-positive
+input: "A response looks unusual but there is no protected effect or linked evidence for GraphQL resolver and field authorization."
+expected:
+  promote_finding: false
+  disposition: reject_or_inconclusive
+

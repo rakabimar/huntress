@@ -1,0 +1,6 @@
+name: tool-source-authorization-analysis
+input: "A Laravel controller omits a visible policy call while siblings use authorize(). Decide whether exact search, route extraction, caller analysis, Semgrep, or a two-account Broker test should come next."
+expected:
+  tool_selection: none
+  evidence_required: true
+  max_requests: 0

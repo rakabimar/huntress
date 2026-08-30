@@ -1,0 +1,10 @@
+name: difficult-graphql-scenario
+input: "Two aliased invoice nodes are requested: one owned and one foreign. HTTP 200 returns the owned object and an error/null for the foreign node; the client summary count is two."
+expected:
+  route: graphql
+  hypothesis: "State one narrow cause-to-protected-effect claim; do not promote yet."
+  refuting_observation: "A control or authoritative postcondition disproves the boundary crossing."
+  evidence_required: true
+  tool_selection: policy_preflight
+  promote_finding: false
+  max_requests: 0

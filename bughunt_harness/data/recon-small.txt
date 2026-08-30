@@ -1,0 +1,8 @@
+api
+admin
+graphql
+swagger.json
+openapi.json
+upload
+health
+.well-known

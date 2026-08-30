@@ -1,0 +1,9 @@
+{
+  "name": "portable-bughunt-harness-local-integrations",
+  "private": true,
+  "version": "0.3.0",
+  "description": "Pinned local MCP integration dependencies for the bug hunting harness",
+  "devDependencies": {
+    "@playwright/mcp": "0.0.79"
+  }
+}

@@ -1,0 +1,10 @@
+name: complex-request-smuggling
+input: "A shared frontend may desynchronize; any probe must be policy-classified and self-attributed."
+expected:
+  route: request-smuggling
+  hypothesis: "Form one narrow cause-to-protected-effect claim; static or odd behavior is not a finding."
+  refuting_observation: "The authoritative control/effect remains safe under the bounded comparison."
+  promote_finding: false
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

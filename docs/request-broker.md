@@ -7,21 +7,24 @@ external HTTP path. Arbitrary unrestricted execution is never exposed; a raw
 Every request flows through, in order:
 
 1. **Scope check** — out-of-scope targets are refused immediately (no network).
-2. **Policy gate** — `deny` refuses; `approval_required` records an approval
-   request and returns without sending.
-3. **Header/secret resolution** — required + secret headers are resolved from
+2. **Policy gate** — `DENY` refuses; `ASK` uses only a matching bounded human
+   approval; `AUTO` proceeds without creating approval state.
+3. **Header/AuthContext resolution** — required + secret headers, cookie,
+   bearer, or header bundles are resolved from
    `env:` / `keyring:` / `file:` references (values never logged).
-4. **Rate limit** — per-host minimum-spacing enforced against `roe.max_rps`.
+4. **Rate/concurrency lease** — shared SQLite enforcement with expiring leases.
 5. **Burp proxy routing** — optional, from `BUGHUNT_BURP_PROXY`.
-6. **Execution** — via `requests`, with safe defaults (redirects off, verify on).
-7. **Redaction** — response headers + body preview are redacted.
-8. **Evidence persistence** — a redacted `request_response` record is written to
+6. **Execution** — via `requests`, TLS verification on. Redirects are handled
+   manually and every hop repeats scope, policy, and rate checks.
+7. **Redaction** — built-in headers, program secret headers, AuthContext headers,
+   URL parameters, resolved values, and configured patterns are redacted.
+8. **Evidence persistence** — a full redacted request/response representation is written to
    the program's `evidence/` dir.
 9. **Action log** — records action/target/decision/summary (no secrets).
 
 ## Result
 
-`BrokerResult` carries `ok`, `decision` (allow / approval_required / deny),
+`BrokerResult` carries `ok`, `decision` plus `mode` (`AUTO` / `ASK` / `DENY`),
 `reason`, `status_code`, redacted headers, a bounded `body_preview`, and the
 `evidence_id`.
 
@@ -35,7 +38,7 @@ Every request flows through, in order:
 
 ## Safety properties
 
-- Out-of-scope / forbidden / approval-gated requests **short-circuit before any
-  socket is opened** (asserted in `tests/test_broker.py`).
+- Out-of-scope / forbidden / unapproved ASK requests **short-circuit before any
+  socket is opened**.
 - The happy path is only exercised in tests against a **loopback** fixture
   server — never a real target (spec §95).

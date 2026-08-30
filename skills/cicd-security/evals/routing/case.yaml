@@ -1,0 +1,7 @@
+name: routing-cicd-security
+input: "A repository dispatch event can select a deployment environment and its job receives an OIDC token plus cloud deployment permissions. Which specialist methodology owns the trust-boundary review?"
+expected:
+  selected_skill: cicd-security
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

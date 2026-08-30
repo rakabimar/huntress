@@ -1,0 +1,10 @@
+name: difficult-business-logic-scenario
+input: "A coupon reservation reduces availability before payment. Cancellation restores it asynchronously. A rapid retry shows two success messages but final discount and usage ledgers have not converged."
+expected:
+  route: business-logic
+  hypothesis: "State one narrow cause-to-protected-effect claim; do not promote yet."
+  refuting_observation: "A control or authoritative postcondition disproves the boundary crossing."
+  evidence_required: true
+  tool_selection: policy_preflight
+  promote_finding: false
+  max_requests: 0

@@ -1,0 +1,7 @@
+name: route-csrf
+input: "A cross-site form receives 302 after submitting an email change; account state is unknown."
+expected:
+  selected_skill: csrf
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

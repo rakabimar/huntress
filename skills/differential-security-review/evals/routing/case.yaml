@@ -1,0 +1,8 @@
+name: route-differential-security-review
+input: "A release diff changes OAuth redirect validation and dependency configuration. Select differential review plus only the relevant supporting skills and bounded tool surface."
+expected:
+  selected_skill: differential-security-review
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

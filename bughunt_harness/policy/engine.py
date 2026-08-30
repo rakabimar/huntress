@@ -33,12 +33,19 @@ DENY = "deny"
 # Action name -> matching ROE boolean flag gate.
 ACTION_ROE_GATE = {
     "authentication_test": "authentication_testing",
+    "session_test": "authentication_testing",
     "authorization_test": "authorization_testing",
     "upload_test": "file_upload",
     "race_test": "race_conditions",
     "limited_fuzz": "fuzzing",
     "oob_test": "out_of_band_testing",
     "state_changing_request": "state_changing_actions",
+    "browser_test_account_mutation": "state_changing_actions",
+    "passive_recon": "passive_recon",
+    "historical_url_recon": "historical_url_recon",
+    "active_recon": "active_recon",
+    "crawl": "crawling",
+    "bounded_scan": "bounded_scanning",
     "brute_force": "brute_force",
     "dos": "denial_of_service",
     "destructive": "destructive_testing",
@@ -66,6 +73,9 @@ class PolicyDecision:
         return {
             "action": self.action,
             "decision": self.decision,
+            "mode": {
+                ALLOW: "AUTO", APPROVAL_REQUIRED: "ASK", DENY: "DENY",
+            }[self.decision],
             "risk_class": self.risk_class,
             "reason": self.reason,
             "scope": self.scope.as_dict() if self.scope else None,

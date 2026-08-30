@@ -1,0 +1,7 @@
+name: false-positive-git-history-security
+input: "A commit message says security hardening, but the diff only renames a helper and preserves identical authorization behavior and tests. Reject title-based vulnerability inference."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

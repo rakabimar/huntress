@@ -1,0 +1,10 @@
+name: complex-scenario-http-parameter-pollution
+input: "A proxy signature covers the first tenant query value while the application framework appears to use the last. Only source/config evidence exists; no protected operation has run."
+expected:
+  route: http-parameter-pollution
+  hypothesis: "One exact boundary hypothesis; do not promote from the observation."
+  refuting_observation: "The safe/intended control or absent protected effect disproves it."
+  evidence_required: true
+  promote_finding: false
+  tool_selection: policy_preflight
+  max_requests: 0

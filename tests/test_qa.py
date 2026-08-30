@@ -12,6 +12,7 @@ def _complete_report(**overrides):
         cwe="CWE-601",
         severity="Medium",
         cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+        prerequisites=["No account required"],
         steps=["1. Request /logout?next=https://evil.example"],
         poc="GET /logout?next=https://evil.example -> 302 Location: https://evil.example",
         expected_result="Redirect restricted to same-origin destinations",

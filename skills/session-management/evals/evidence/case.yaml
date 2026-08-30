@@ -1,0 +1,7 @@
+name: session-management-evidence-gap
+input: "A password change completed, and a pre-change device session may still work; only UI screenshots exist and credential values must not be stored."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

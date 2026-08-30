@@ -1,0 +1,7 @@
+name: route-race-condition
+input: "A payment refund workflow has a read-check-write transition shared by API and worker paths. Route to business-logic plus race analysis and define actors and invariant first."
+expected:
+  selected_skill: race-condition
+  evidence_required: true
+  tool_selection: policy_preflight
+  max_requests: 0

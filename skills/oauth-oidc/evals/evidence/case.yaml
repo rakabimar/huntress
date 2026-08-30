@@ -1,0 +1,7 @@
+name: oauth-oidc-evidence-gap
+input: "A redirect URI variation reaches the client callback, but no code/token was delivered to attacker control and no wrong account login occurred."
+expected:
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

@@ -1,0 +1,7 @@
+name: reject-static-claim-differential-security-review
+input: "A scanner finds a dangerous function in an unregistered test fixture with no reachable attacker entrypoint."
+expected:
+  promote_finding: false
+  evidence_required: true
+  tool_selection: none
+  max_requests: 0

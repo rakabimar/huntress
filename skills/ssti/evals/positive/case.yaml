@@ -1,0 +1,8 @@
+name: positive-ssti
+input: "A preview turns one arithmetic expression into 49; a second control and server/client attribution are missing."
+expected:
+  route: ssti
+  evidence_required: true
+  promote_finding: false
+  tool_selection: policy_preflight
+  max_requests: 0

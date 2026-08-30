@@ -1,10 +1,19 @@
 ---
 name: websocket
 description: Use when an app opens WebSocket connections whose upgrade is unauthenticated, whose handshake lacks CSRF/Origin protection, or when WS message content is trustingly processed
-maturity: draft
+maturity: stable
 risk_class: R2
 category: client-side
 cwe: [306]
+canonical: true
+primary_specialist: client-side-specialist
+related_skills: [authentication, session-management, api-authorization, csrf, graphql]
+primary_triggers: [WebSocket upgrade, message action, subscription, channel]
+secondary_triggers: [cross-site WebSocket, reconnect, event authorization, GraphQL transport]
+negative_triggers: [public broadcast, rejected upgrade, harmless protocol metadata]
+blackbox: true
+whitebox: true
+behavioral_eval_status: fixture
 ---
 
 # WebSocket Authentication and Message Handling

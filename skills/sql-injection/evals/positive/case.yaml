@@ -1,0 +1,7 @@
+name: routes-sql-injection-positive
+input: "An in-scope example.test flow suggests relational query injection differentials; compare account_a baseline with one controlled mutation."
+expected:
+  route: sql-injection
+  policy_preflight: true
+  evidence_required: true
+

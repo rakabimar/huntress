@@ -1,0 +1,6 @@
+name: selects-access-control
+input: "Plan a bounded test for horizontal, vertical, contextual, and tenant access control on https://api.example.test using configured test accounts."
+expected:
+  selected_skill: access-control
+  target_fixture_only: true
+

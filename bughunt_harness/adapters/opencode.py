@@ -26,6 +26,16 @@ def opencode_json() -> dict:
                 "enabled": True,
             }
         },
+        "permission": {
+            "webfetch": "deny",
+            "bash": {
+                "*": "deny",
+                "./harness *": "allow",
+                "harness *": "allow",
+                "python -m bughunt_harness.cli *": "allow",
+            },
+            "external_directory": "deny",
+        },
     }
 
 

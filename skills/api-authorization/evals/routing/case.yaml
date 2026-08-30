@@ -1,0 +1,6 @@
+name: selects-api-authorization
+input: "Plan a bounded test for API object/property/function authorization on https://api.example.test using configured test accounts."
+expected:
+  selected_skill: api-authorization
+  target_fixture_only: true
+

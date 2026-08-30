@@ -74,9 +74,48 @@ def test_lead_lifecycle(db):
 
 
 def test_finding_full_pipeline(db):
-    f = db.create_finding("IDOR in /users", affected_target="https://example.test/users")
+    from bughunt_harness.engagement.models import ScopeModel, ScopeSet
+    from bughunt_harness.scope.engine import ScopeEngine
+
+    creator = db.start_session("pytest", "researcher", "acme-test")
+    validator = db.start_session("pytest", "finding-validator", "acme-test")
+    lead = db.add_lead("users")
+    hyp = db.create_hypothesis("cross-account read", lead_id=lead.id)
+    db.set_hypothesis_status(hyp.id, "testing")
+    evidence = db.add_evidence("request_response", "fixture")
+    test = db.add_test(hyp.id, "differential")
+    db.complete_test(test.id, "other account data", "supports", [evidence.public_id])
+    f = db.create_finding(
+        "IDOR in /users", affected_target="https://example.test/users",
+        impact_summary="read another test account's private record",
+        evidence_refs=[evidence.public_id], lead_id=lead.id,
+        hypothesis_id=hyp.id, test_ids=[test.id], creator_session_id=creator.id,
+    )
     assert f.status == "candidate"
-    stages = ["validation", "validated", "poc_ready", "scored", "report_ready", "qa_passed", "human_approved"]
+    f = db.transition_finding(f.id, "validation")
+    review = db.begin_validation(f.id)
+    checks = {
+        "scope_eligible": {"passed": True}, "reproducible": {"passed": True},
+        "prerequisites": {"value": "regular account"},
+        "security_boundary": {"value": "cross-account ownership"},
+        "attacker_control": {"value": "user id"},
+        "demonstrated_impact": {"value": f.impact_summary},
+        "intended_behavior": {"passed": True},
+        "false_positive_analysis": {"passed": True},
+        "evidence_quality": {"passed": True}, "minimal_impact": {"passed": True},
+        "program_exclusions": {"passed": True},
+    }
+    db.submit_validation_review(
+        review.id, "supported", check_results=checks,
+        evidence_refs=f.evidence_refs, reviewer_role="finding-validator",
+        reviewer_session_id=validator.id,
+    )
+    f = db.finalize_validation(
+        f.id, scope_engine=ScopeEngine(ScopeModel(include=ScopeSet(domains=["example.test"]))),
+        program_active=True,
+    )
+    assert f.status == "validated"
+    stages = ["poc_ready", "scored", "report_ready", "qa_passed", "human_approved"]
     for s in stages:
         f = db.transition_finding(f.id, s)
         assert f.status == s
@@ -88,27 +127,31 @@ def test_finding_full_pipeline(db):
 
 def test_illegal_finding_transition_raises(db):
     f = db.create_finding("blocked finding")
-    with pytest.raises(InvalidTransitionError):
+    with pytest.raises(StateError):
         db.transition_finding(f.id, "validated")  # candidate -> validated is illegal
 
 
 def test_checkpoint_roundtrip(db):
+    lead = db.add_lead("checkpoint lead")
+    hyp = db.create_hypothesis("checkpoint hypothesis", lead_id=lead.id)
+    test_a = db.add_test(hyp.id, "a")
+    test_b = db.add_test(hyp.id, "b")
     cp = db.save_checkpoint(
-        active_lead_id=1,
-        completed_tests=[3, 4],
+        active_lead_id=lead.id,
+        completed_tests=[test_a.id, test_b.id],
         recent_observations=["odd redirect observed"],
         next_action="retest with account_b",
     )
     latest = db.latest_checkpoint()
     assert latest.id == cp.id
-    assert latest.completed_tests == [3, 4]
+    assert latest.completed_tests == [test_a.id, test_b.id]
     assert latest.next_action == "retest with account_b"
 
 
 def test_approval_roundtrip(db):
     a = db.request_approval("race_test", "https://example.test", requested_by="attacker")
     assert a.status == "pending"
-    assert db.decide_approval(a.id, "approved").status == "approved"
+    assert db.decide_approval(a.id, "approved", decided_by="human").status == "approved"
 
 
 def test_evidence(db):

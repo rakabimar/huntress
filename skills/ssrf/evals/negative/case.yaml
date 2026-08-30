@@ -1,0 +1,6 @@
+name: rejects-ssrf-false-positive
+input: "A response looks unusual but there is no protected effect or linked evidence for server-side URL fetching and network boundary behavior."
+expected:
+  promote_finding: false
+  disposition: reject_or_inconclusive
+

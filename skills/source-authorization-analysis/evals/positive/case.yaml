@@ -1,0 +1,8 @@
+name: positive-source-authorization-analysis
+input: "Nine invoice mutation handlers call requireInvoiceOwner; one export handler loads by invoice ID and enqueues a PDF job directly. Produce a Source Lead with the ownership invariant and runtime confirmation question."
+expected:
+  route: source-authorization-analysis
+  evidence_required: true
+  promote_finding: false
+  tool_selection: none
+  max_requests: 0

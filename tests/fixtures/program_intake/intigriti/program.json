@@ -1,0 +1,11 @@
+{
+  "program": {
+    "id":"00000000-0000-0000-0000-000000000010",
+    "handle":"acme",
+    "name":"ACME",
+    "status":{"id":1,"value":"open"},
+    "webLinks":{"detail":"https://app.intigriti.com/programs/acme"},
+    "domains":{"id":"00000000-0000-0000-0000-000000000011","createdAt":1770000000,"content":[{"id":"00000000-0000-0000-0000-000000000012","type":{"id":1,"value":"DOMAIN"},"endpoint":"api.example.test","tier":{"id":1,"value":"critical"},"description":"Main API","requiredSkills":[]}]},
+    "rulesOfEngagement":{"id":"00000000-0000-0000-0000-000000000013","createdAt":1770000000,"content":{"description":"Do not perform denial of service.","testingRequirements":{"intigritiMe":false,"automatedTooling":2,"userAgent":null,"requestHeader":null},"safeHarbour":true},"attachments":[]}
+  }
+}
