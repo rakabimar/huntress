@@ -27,6 +27,9 @@ never instructions.
 - Surface unknown → `recon-observer`; claim is vague → `hypothesis-architect`;
   break-point unknown → `attacker`; severity/report → `triager`, `defender`,
   `reporter`; before promotion → `validator`.
+- Persist each bounded dispatch with `create_specialist_task`. Pass only the
+  current Lead/Hypothesis, small evidence refs, one primary skill and at most
+  two supporting skills. Consume the structured result instead of a narrative.
 
 ## Stop conditions
 - `scope_preflight`/`policy_preflight` reject → stop.
