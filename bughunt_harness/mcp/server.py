@@ -45,6 +45,14 @@ _SOURCE_WRITE = {
     "source_build_in_sandbox", "source_run_tests_in_sandbox", "source_run_reproducer",
     "source_run_fuzz_harness",
 }
+_REQUEST_MECHANICS = {
+    "replay_request", "compare_responses", "compare_authorized_request",
+    "get_coverage_summary", "run_mutation_plan",
+}
+_OAST_TOOLS = {
+    "get_oast_capabilities", "create_oast_session", "create_oast_probe",
+    "poll_oast_probe", "get_oast_probe", "list_oast_interactions", "close_oast_session",
+}
 _HANDOFF = {
     "create_specialist_task", "get_specialist_task", "list_specialist_tasks",
     "run_specialist_task",
@@ -64,6 +72,7 @@ _ORCHESTRATOR = {
     "get_program_intake_status", "get_program_review_summary",
     "list_program_ambiguities", "refresh_program_intake",
 } | _HANDOFF
+_ORCHESTRATOR |= {"get_coverage_summary", "compare_responses"}
 _RESEARCHER = _COMMON_READ | {
     "refresh_autonomous_hunt", "list_leads", "claim_lead", "release_lead",
     "list_hypotheses", "create_hypothesis", "update_hypothesis", "list_tests",
@@ -72,7 +81,7 @@ _RESEARCHER = _COMMON_READ | {
     "save_checkpoint", "get_recon_summary", "list_interesting_surfaces",
     "run_recon_profile", "send_authorized_http_request", "browser_observe",
     "browser_action", "request_approval", "get_approval", "list_auth_contexts",
-} | _HANDOFF
+} | _HANDOFF | _REQUEST_MECHANICS | {"get_auth_session_status", "refresh_auth_session", "search_security_knowledge"}
 _SPECIALIST = _COMMON_READ | {
     "get_lead", "get_hypothesis", "create_hypothesis", "update_hypothesis",
     "list_tests", "create_research_test", "complete_research_test",
@@ -80,19 +89,20 @@ _SPECIALIST = _COMMON_READ | {
     "browser_observe", "browser_action", "request_approval", "get_approval",
     "save_checkpoint", "list_auth_contexts", "get_auth_context",
     "search_burp_http_history", "search_burp_proxy_history",
-}
+} | _REQUEST_MECHANICS
 ROLE_TOOL_SURFACES = {
+    "attacker": _SPECIALIST | _OAST_TOOLS | {"run_mutation_plan", "run_concurrent_request_plan"},
     "orchestrator": _ORCHESTRATOR,
     "researcher": _RESEARCHER,
-    "api-authz-specialist": _SPECIALIST,
-    "auth-identity-specialist": _SPECIALIST,
-    "client-side-specialist": _SPECIALIST,
-    "business-logic-specialist": _SPECIALIST,
+    "api-authz-specialist": _SPECIALIST | {"compare_authorized_request", "replay_request", "compare_responses"},
+    "auth-identity-specialist": _SPECIALIST | {"get_auth_session_status", "refresh_auth_session", "compare_authorized_request"},
+    "client-side-specialist": _SPECIALIST | _OAST_TOOLS | {"analyze_js_artifact"},
+    "business-logic-specialist": _SPECIALIST | {"run_concurrent_request_plan", "run_mutation_plan"},
     "whitebox-audit-specialist": _COMMON_READ | _SOURCE_READ | _SOURCE_WRITE | {
         "get_recon_summary", "list_endpoints", "get_endpoint", "list_leads",
         "create_lead", "get_lead", "create_hypothesis", "create_research_test",
         "create_evidence", "save_checkpoint", "request_approval", "get_approval",
-    },
+    } | {"analyze_js_artifact", "get_coverage_summary"},
     "recon-specialist": _COMMON_READ | {
         "get_burp_capabilities", "search_burp_http_history", "search_burp_websocket_history",
         "search_burp_organizer", "run_authorized_recon",
@@ -107,7 +117,7 @@ ROLE_TOOL_SURFACES = {
         "get_finding", "get_finding_validation_bundle", "list_tests",
         "list_evidence", "create_evidence", "list_validation_reviews",
         "send_authorized_http_request", "submit_validation_review",
-    },
+    } | {"compare_responses"},
     "reporter": _COMMON_READ | {
         "get_finding", "get_finding_validation_bundle", "list_evidence",
         "list_validation_reviews", "prepare_finding_poc", "score_finding_cvss",
@@ -1469,6 +1479,179 @@ def _make_mcp(name: str = "bughunt-harness"):
                           "unresolved_questions": unresolved_questions or []},
             )
 
+    @mcp.tool()
+    def replay_request(
+        request_id: str, mutations: list[dict] | None = None, auth_context: str | None = None,
+        research_test_id: str | None = None, hypothesis_id: str | None = None,
+    ) -> dict:
+        """Replay one recorded request with bounded structured mutations through every current gate."""
+        from ..requests.replay import ReplayService
+        from ..requests.templates import RequestMutation
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            session = _session(ctx); _autonomy_gate(ctx)
+            result = ReplayService(ctx).replay_request(
+                _id(request_id), mutations=[RequestMutation(**item) for item in (mutations or [])],
+                auth_context=auth_context, session_id=session.id, agent_role=_agent_role(),
+                research_test_id=_id(research_test_id) if research_test_id else None,
+                hypothesis_id=_id(hypothesis_id) if hypothesis_id else None,
+            )
+            return result.as_dict()
+
+    @mcp.tool()
+    def compare_responses(request_ids: list[str], ignore_json_paths: list[str] | None = None) -> dict:
+        """Compare 2-10 recorded responses deterministically; returns an observation only."""
+        from ..requests.response_diff import ResponseComparator
+        if not 2 <= len(request_ids) <= 10:
+            raise ValueError("compare_responses requires 2-10 request IDs")
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            _session(ctx)
+            records = [ctx.db.get_request_record(_id(item)) for item in request_ids]
+            return ResponseComparator(ignore_json_paths=set(ignore_json_paths or [])).compare_records(records, workspace=ctx.workspace).as_dict()
+
+    @mcp.tool()
+    def compare_authorized_request(
+        request_id: str, contexts: list[str], mutations: list[dict] | None = None,
+        mode: str = "ROLE_A_VS_ROLE_B", baseline_context: str = "",
+        expected_owner_context: str = "", research_test_id: str | None = None,
+        hypothesis_id: str | None = None,
+    ) -> dict:
+        """Replay the exact request sequentially across 2-4 AuthContexts and compare responses."""
+        from dataclasses import asdict
+        from ..requests.replay import ReplayService
+        from ..requests.templates import RequestMutation
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            session = _session(ctx); _autonomy_gate(ctx)
+            result = ReplayService(ctx).compare_across_auth(
+                _id(request_id), contexts=contexts, session_id=session.id,
+                mutations=[RequestMutation(**item) for item in (mutations or [])], mode=mode,
+                baseline_context=baseline_context, expected_owner_context=expected_owner_context,
+                research_test_id=_id(research_test_id) if research_test_id else None,
+                hypothesis_id=_id(hypothesis_id) if hypothesis_id else None,
+                agent_role=_agent_role(),
+            )
+            return asdict(result)
+
+    @mcp.tool()
+    def get_coverage_summary() -> dict:
+        """Return observed-surface counts, stale changes, auth and skill-family coverage."""
+        from ..coverage import CoverageTracker
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            _session(ctx); return CoverageTracker(ctx).summary()
+
+    @mcp.tool()
+    def run_mutation_plan(
+        request_id: str, parameters: list[dict], max_requests: int,
+        max_parameters: int = 5, max_candidates_per_parameter: int = 8,
+        skill: str = "fuzzing", goal: str = "identify response clusters",
+        research_test_id: str | None = None, hypothesis_id: str | None = None,
+    ) -> dict:
+        """Run a bounded one-field-at-a-time mutation plan through the Broker."""
+        from ..mutation import MutationEngine, MutationPlan
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            session = _session(ctx); _autonomy_gate(ctx)
+            plan = MutationPlan(_id(request_id), parameters, "type-aware", max_requests, max_parameters, max_candidates_per_parameter, skill, goal)
+            return MutationEngine(ctx).execute(plan, session_id=session.id,
+                research_test_id=_id(research_test_id) if research_test_id else None,
+                hypothesis_id=_id(hypothesis_id) if hypothesis_id else None)
+
+    @mcp.tool()
+    def run_concurrent_request_plan(
+        request_id: str, count: int, max_concurrency: int, mode: str = "PARALLEL",
+        auth_context: str = "", duration_seconds: int = 30,
+        post_condition_request_id: str | None = None,
+    ) -> dict:
+        """Execute an explicitly policy-gated bounded race plan; never claims single-packet sync."""
+        from ..concurrent import ConcurrentRequestExecutor, ConcurrentRequestPlan
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            session = _session(ctx); _autonomy_gate(ctx)
+            plan = ConcurrentRequestPlan(_id(request_id), count, max_concurrency, mode, auth_context, duration_seconds, _id(post_condition_request_id) if post_condition_request_id else None)
+            return ConcurrentRequestExecutor(ctx).execute(plan, session_id=session.id)
+
+    @mcp.tool()
+    def analyze_js_artifact(url: str, recon_run_id: str | None = None) -> dict:
+        """Fetch an in-scope JS artifact through the Broker and return compact extracted observations."""
+        from ..javascript import JavaScriptAnalyzer
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            session = _session(ctx); _autonomy_gate(ctx)
+            return JavaScriptAnalyzer(ctx).analyze_url(url, session_id=session.id, recon_run_id=_id(recon_run_id) if recon_run_id else None)
+
+    @mcp.tool()
+    def get_auth_session_status(auth_context: str = "") -> list[dict]:
+        """Return lifecycle metadata only; never credential refs or values."""
+        from ..auth import AuthSessionManager
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            _session(ctx); return AuthSessionManager(ctx).status(auth_context or None)
+
+    @mcp.tool()
+    def refresh_auth_session(auth_context: str) -> dict:
+        """Perform one configured, Broker-gated refresh/login attempt without returning secrets."""
+        from ..auth import AuthSessionManager
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            session = _session(ctx); _autonomy_gate(ctx)
+            result = AuthSessionManager(ctx).refresh(auth_context, session_id=session.id, agent_role=_agent_role())
+            result.pop("credential_ref", None); result.get("metadata", {}).pop("refresh_ref", None)
+            return result
+
+    @mcp.tool()
+    def get_oast_capabilities() -> dict:
+        """Capability-detect OAST providers; performs no provider network call."""
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            _session(ctx); service = _oast_service(ctx)
+            result = service.capabilities()
+            result["burp_collaborator"] = {"available": False, "detail": "BURP_COLLABORATOR_UNAVAILABLE: installed Burp MCP exposes history/Organizer only"}
+            return result
+
+    @mcp.tool()
+    def create_oast_session(provider: str, expires_in: int = 1800, approval_id: str | None = None) -> dict:
+        """Create one bounded provider session; third-party providers require current approval."""
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            session = _session(ctx); _autonomy_gate(ctx)
+            result = _oast_service(ctx).create_session(provider, session_id=session.id, expires_in=expires_in, approval_id=_id(approval_id) if approval_id else None)
+            return _safe_oast(result)
+
+    @mcp.tool()
+    def create_oast_probe(oast_session_id: int, hypothesis_id: str, research_test_id: str, expected_protocols: list[str] | None = None) -> dict:
+        """Allocate one opaque correlation identity bound to one hypothesis/test."""
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            _session(ctx); _autonomy_gate(ctx)
+            return _safe_oast(_oast_service(ctx).create_probe(oast_session_id, hypothesis_id=_id(hypothesis_id), research_test_id=_id(research_test_id), expected_protocols=expected_protocols))
+
+    @mcp.tool()
+    def poll_oast_probe(probe_id: int, wait_seconds: int = 0) -> dict:
+        """Poll one exact probe with bounded backoff (maximum 300 seconds)."""
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            _session(ctx); result = _oast_service(ctx).poll_probe(probe_id, wait_seconds=wait_seconds)
+            result["probe"] = _safe_oast(result["probe"]); return result
+
+    @mcp.tool()
+    def get_oast_probe(probe_id: int) -> dict:
+        """Get safe metadata for one active-program OAST probe."""
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            _session(ctx); return _safe_oast(_oast_service(ctx).get_probe(probe_id))
+
+    @mcp.tool()
+    def list_oast_interactions(probe_id: int) -> list[dict]:
+        """List sanitized, deduplicated interactions for one exact probe."""
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            _session(ctx); return _oast_service(ctx).list_interactions(probe_id)
+
+    @mcp.tool()
+    def close_oast_session(oast_session_id: int) -> dict:
+        """Close one provider session and all of its probes."""
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            _session(ctx); return _safe_oast(_oast_service(ctx).close_session(oast_session_id))
+
+    @mcp.tool()
+    def search_security_knowledge(query: str, categories: list[str] | None = None, limit: int = 10) -> list[dict]:
+        """Search local CWE/advisory/public-report knowledge; results never authorize testing."""
+        from ..config import get_paths
+        from ..knowledge_store import KnowledgeStore
+        with load_program_context(_active_slug()) as ctx:  # type: ignore[arg-type]
+            _session(ctx)
+            store = KnowledgeStore(get_paths().cache_root / "security-knowledge.db")
+            try: return store.search(query, categories=categories, limit=limit)
+            finally: store.close()
+
     allowed = tool_names_for_role(_agent_role())
     if allowed is not None:
         mcp._tool_manager._tools = {  # noqa: SLF001 - FastMCP has no public filter API
@@ -1520,7 +1703,9 @@ def _finding(f: FindingRecord) -> dict:
             "impact_summary": f.impact_summary, "evidence_refs": f.evidence_refs,
             "cvss_data": f.cvss_data, "report_path": f.report_path, "poc_path": f.poc_path,
             "lead_id": f.lead_id, "hypothesis_id": f.hypothesis_id, "test_ids": f.test_ids,
-            "creator_session_id": f.creator_session_id, "linkage_state": f.linkage_state}
+            "creator_session_id": f.creator_session_id, "linkage_state": f.linkage_state,
+            "dedup_classification": f.dedup_classification,
+            "potential_duplicate_of": f.potential_duplicate_of}
 
 
 def _approval(a) -> dict:
@@ -1548,6 +1733,28 @@ def _auth(a) -> dict:
             "role": a.role, "enabled": a.enabled,
             "auth_available": bool(a.enabled and a.secret_refs),
             "created_at": a.created_at}
+
+
+def _oast_service(ctx):
+    from ..config import get_config
+    from ..oast import GenericConfiguredProvider, InteractshProvider, OASTService
+    cfg = get_config().oast_config
+    providers = {"interactsh": InteractshProvider(server=str(cfg.get("interactsh_server") or ""))}
+    generic = cfg.get("generic") if isinstance(cfg.get("generic"), dict) else {}
+    if generic and all(generic.get(key) for key in ("base_domain", "allocate_endpoint", "poll_endpoint")):
+        token = ctx.secrets.resolve(generic.get("token_ref")) if generic.get("token_ref") else ""
+        providers["generic"] = GenericConfiguredProvider(
+            base_domain=str(generic["base_domain"]), allocate_endpoint=str(generic["allocate_endpoint"]),
+            poll_endpoint=str(generic["poll_endpoint"]), token=token or "",
+        )
+    return OASTService(ctx, providers)
+
+
+def _safe_oast(value: dict) -> dict:
+    result = dict(value)
+    result.pop("provider_session_reference", None)
+    result.pop("correlation_token", None)
+    return result
 
 
 __all__ = ["run", "_make_mcp"]

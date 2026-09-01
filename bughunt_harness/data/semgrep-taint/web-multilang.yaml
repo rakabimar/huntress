@@ -1,0 +1,58 @@
+rules:
+  - id: bughunt.javascript.remote-to-network
+    mode: taint
+    languages: [javascript, typescript]
+    message: Remote request data reaches a network/process sink; SourceObservation only.
+    severity: WARNING
+    pattern-sources:
+      - pattern-either:
+          - pattern: $REQ.query.$FIELD
+          - pattern: $REQ.body.$FIELD
+          - pattern: $REQ.params.$FIELD
+    pattern-sinks:
+      - pattern-either:
+          - pattern: fetch($X, ...)
+          - pattern: $CLIENT.get($X, ...)
+          - pattern: exec($X, ...)
+          - pattern: readFile($X, ...)
+    pattern-sanitizers:
+      - pattern-either:
+          - pattern: validateExternalUrl(...)
+          - pattern: sanitize(...)
+  - id: bughunt.java.remote-to-dangerous-sink
+    mode: taint
+    languages: [java]
+    message: Request parameter reaches a network/process/path/SQL sink; SourceObservation only.
+    severity: WARNING
+    pattern-sources:
+      - pattern: $REQ.getParameter(...)
+    pattern-sinks:
+      - pattern-either:
+          - pattern: new URL($X)
+          - pattern: Runtime.getRuntime().exec($X)
+          - pattern: new File($X)
+          - pattern: $STMT.executeQuery($X)
+    pattern-sanitizers:
+      - pattern-either:
+          - pattern: validate(...)
+          - pattern: canonicalize(...)
+  - id: bughunt.go.remote-to-dangerous-sink
+    mode: taint
+    languages: [go]
+    message: HTTP input reaches a network/process/path/SQL sink; SourceObservation only.
+    severity: WARNING
+    pattern-sources:
+      - pattern-either:
+          - pattern: $R.URL.Query().Get(...)
+          - pattern: $C.Query(...)
+          - pattern: $C.Param(...)
+    pattern-sinks:
+      - pattern-either:
+          - pattern: http.Get($X)
+          - pattern: exec.Command($X, ...)
+          - pattern: os.Open($X)
+          - pattern: $DB.Query($X, ...)
+    pattern-sanitizers:
+      - pattern-either:
+          - pattern: validate(...)
+          - pattern: filepath.Clean(...)

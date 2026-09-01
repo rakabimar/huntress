@@ -126,6 +126,49 @@ def _probe_state_home() -> str:
     return f"state home prepared + writable ({cfg.home})"
 
 
+def _probe_portability() -> str:
+    from .config import get_paths
+    from .portability import personal_path_matches
+    paths = get_paths(); matches = personal_path_matches(paths.project_root)
+    assert not matches, f"personal absolute paths in canonical files: {matches[:3]}"
+    assert paths.bughunt_home != paths.project_root, "mutable user state must not live in source tree"
+    return f"PORTABILITY_READY project={paths.project_root} state={paths.bughunt_home}; personal_paths=0"
+
+
+def _probe_completion_capabilities() -> str:
+    from .state.db import HuntDB
+    with tempfile.TemporaryDirectory(prefix="bughunt-capabilities-") as td:
+        db = HuntDB(Path(td) / "hunt.db", "capability-doctor")
+        tables = {row[0] for row in db._conn.execute("SELECT name FROM sqlite_master WHERE type IN ('table','view')")}
+        required = {"differential_result", "oast_session", "auth_session", "coverage_observation", "js_artifact", "finding_fingerprint", "recon_watch", "program_learning", "knowledge_document"}
+        assert required <= tables, f"missing capability tables: {sorted(required - tables)}"
+        db.close()
+    from .requests import RequestTemplate, ResponseComparator
+    from .whitebox_taint import MultiLanguageTaintAnalyzer
+    assert RequestTemplate and ResponseComparator and MultiLanguageTaintAnalyzer
+    return "RESPONSE_DIFF/AUTH_DIFFERENTIAL/SESSION_LIFECYCLE/COVERAGE/JS_INTELLIGENCE/WHITEBOX_TAINT/KNOWLEDGE/WATCH schemas PASS"
+
+
+def _oast_check() -> DoctorCheck:
+    from .oast import InteractshProvider
+    cap = InteractshProvider().capabilities()
+    detail = (
+        f"Interactsh={'INSTALLED' if cap.available else 'NOT_INSTALLED'} REACHABLE=NOT_TESTED; "
+        "Burp Collaborator=UNAVAILABLE; self-hosted=NOT_CONFIGURED; OAST policy=program-dependent"
+    )
+    return _ok("OAST_READY", "hunt", detail) if cap.available else _warn("OAST_READY", "hunt", detail)
+
+
+def _oast_program_policy_check(program: str) -> DoctorCheck:
+    from .hunt import load_program_context
+    with load_program_context(program) as ctx:
+        decision = ctx.policy.check("oob_test")
+        detail = f"program OAST policy={decision.decision} reason={decision.reason}"
+        if decision.decision == "deny":
+            return _warn("OAST_PROGRAM_POLICY", "hunt", detail)
+        return _ok("OAST_PROGRAM_POLICY", "hunt", detail)
+
+
 # --------------------------------------------------------------------------- #
 # core probes
 # --------------------------------------------------------------------------- #
@@ -743,7 +786,7 @@ def _probe_source_schema() -> str:
             assert required <= tables, f"missing source tables: {sorted(required - tables)}"
         finally:
             db.close()
-    return "source architecture/symbol/invariant/runtime/handoff/telemetry schema v9 PASS"
+    return "source architecture/symbol/invariant/runtime/handoff/telemetry schema v10 PASS"
 
 
 def _probe_telemetry() -> str:
@@ -1127,6 +1170,16 @@ class DoctorReport:
             "MODEL_VERIFIED": model_verified,
             "WHITEBOX_MODEL_VERIFIED": whitebox_model_verified,
             "SPECIALIST_ORCHESTRATION_VERIFIED": specialist_verified,
+            "PORTABILITY_READY": "PASS" if any(c.name == "portability" and c.status == OK for c in self.checks) else "FAIL",
+            "OAST_READY": "PASS" if any(c.name == "OAST_READY" and c.status == OK for c in self.checks) else "NOT_CONFIGURED",
+            "SESSION_LIFECYCLE_READY": "PASS" if any(c.name == "completion_capabilities" and c.status == OK for c in self.checks) else "FAIL",
+            "RESPONSE_DIFF_READY": "PASS" if any(c.name == "completion_capabilities" and c.status == OK for c in self.checks) else "FAIL",
+            "AUTH_DIFFERENTIAL_READY": "PASS" if any(c.name == "completion_capabilities" and c.status == OK for c in self.checks) else "FAIL",
+            "JS_INTELLIGENCE_READY": "PASS" if any(c.name == "completion_capabilities" and c.status == OK for c in self.checks) else "FAIL",
+            "COVERAGE_READY": "PASS" if any(c.name == "completion_capabilities" and c.status == OK for c in self.checks) else "FAIL",
+            "WHITEBOX_TAINT_READY": "PASS" if any(c.name == "completion_capabilities" and c.status == OK for c in self.checks) else "FAIL",
+            "KNOWLEDGE_READY": "PASS" if any(c.name == "completion_capabilities" and c.status == OK for c in self.checks) else "FAIL",
+            "WATCH_READY": "PASS" if any(c.name == "completion_capabilities" and c.status == OK for c in self.checks) else "FAIL",
         }
         return {
             "level": self.level,
@@ -1210,15 +1263,18 @@ def run_doctor(
     checks.append(_try("install", "env", _probe_install))
     checks.append(_try("dependencies", "env", _probe_dependencies))
     checks.append(_try("state_home", "env", _probe_state_home))
+    checks.append(_try("portability", "env", _probe_portability))
 
     # Tier 1 — deterministic core.
     checks.append(_try("registry", "core", _probe_registry))
     checks.append(_try("scope_engine", "core", _probe_scope))
     checks.append(_try("policy_engine", "core", _probe_policy))
     checks.append(_try("state_machine", "core", _probe_state_machine))
+    checks.append(_try("completion_capabilities", "core", _probe_completion_capabilities))
 
     # Tier 2 — hunt capability (program-gated).
     checks.append(_try("skills", "hunt", _probe_skills))
+    checks.append(_oast_check())
     checks.append(_try("source_schema", "hunt", _probe_source_schema))
     checks.append(_try("telemetry", "hunt", _probe_telemetry))
     checks.append(_try("approval_run_scoping", "hunt", _probe_approval_run_scoping))
@@ -1240,6 +1296,7 @@ def run_doctor(
     checks.append(_try("claude_runtime", "hunt", _probe_claude_runtime))
     checks.append(_try("program_present", "hunt", lambda: _probe_program_present(program)))
     if program:
+        checks.append(_oast_program_policy_check(program))
         checks.append(_try("intake_source", "hunt", lambda: _probe_intake_source(program)))
         checks.append(_try("intake_freshness", "hunt", lambda: _probe_intake_freshness(program)))
         checks.append(_try("scope_roe_provenance", "hunt", lambda: _probe_intake_provenance(program)))

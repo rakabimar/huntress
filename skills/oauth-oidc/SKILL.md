@@ -46,3 +46,5 @@ Read references/attack-surface.md for flow-specific branches and account-linking
 Use Playwright for the controlled browser transaction and the request broker
 for protocol-level comparisons. Run `policy_preflight` before account linking,
 consent, or any callback mutation. Persist fingerprints, never token values.
+
+Use AuthSession lifecycle metadata for token refresh/rotation and structured response comparison for protocol baselines. Human/MFA steps are not automation targets.

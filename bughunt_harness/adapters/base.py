@@ -11,8 +11,10 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from ..config import _discover_project_root
+
 # Repo root is two levels up from this file (bughunt_harness/adapters/base.py).
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = _discover_project_root()
 
 RUNTIME_IDS = ("claude", "codex", "opencode")
 

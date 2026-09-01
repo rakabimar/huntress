@@ -242,6 +242,33 @@ def _secret_ref(value: Any) -> str | None:
     raise ValueError("secret reference must use env:/keyring:/file: or {env|keyring|file: name}")
 
 
+class AuthLoginModel(BaseModel):
+    url: str
+    method: Literal["POST", "PUT"] = "POST"
+    body_type: Literal["json", "form"] = "json"
+    username_field: str = "username"
+    username_ref: str | dict[str, str]
+    password_field: str = "password"
+    password_ref: str | dict[str, str]
+    success_status: int = 200
+    bearer_json_path: str | None = None
+    refresh_json_path: str | None = None
+    cookie_name: str | None = None
+    refresh_url: str | None = None
+    refresh_method: Literal["POST", "PUT"] = "POST"
+    refresh_token_field: str = "refresh_token"
+    refresh_token_ref: str | dict[str, str] | None = None
+    max_login_attempts: int = 1
+
+    @model_validator(mode="after")
+    def _normalize_login_refs(self) -> "AuthLoginModel":
+        self.username_ref = _secret_ref(self.username_ref) or ""
+        self.password_ref = _secret_ref(self.password_ref) or ""
+        self.refresh_token_ref = _secret_ref(self.refresh_token_ref)
+        self.max_login_attempts = max(1, min(int(self.max_login_attempts), 2))
+        return self
+
+
 class AccountAuthModel(BaseModel):
     type: Literal["bearer", "cookie", "header_bundle", "browser_session"] = "header_bundle"
     bearer_ref: str | dict[str, str] | None = None
@@ -249,6 +276,8 @@ class AccountAuthModel(BaseModel):
     headers: dict[str, str | dict[str, str]] = Field(default_factory=dict)
     browser_profile: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
+    strategy: Literal["STATIC", "HTTP_LOGIN", "REFRESH_TOKEN", "COOKIE_LOGIN", "BEARER_LOGIN", "MANUAL_BROWSER"] = "STATIC"
+    login: AuthLoginModel | None = None
 
     @model_validator(mode="after")
     def _normalize_refs(self) -> "AccountAuthModel":
@@ -261,6 +290,8 @@ class AccountAuthModel(BaseModel):
             raise ValueError("cookie auth requires cookie_ref")
         if self.type == "header_bundle" and not self.headers:
             raise ValueError("header_bundle auth requires at least one header reference")
+        if self.strategy in {"HTTP_LOGIN", "REFRESH_TOKEN", "COOKIE_LOGIN", "BEARER_LOGIN"} and self.login is None:
+            raise ValueError(f"{self.strategy} requires auth.login configuration")
         return self
 
     def secret_refs(self) -> list[str]:
@@ -327,17 +358,26 @@ class AutonomyModel(BaseModel):
     # judgment and stays model-or-human orchestrated through idempotent tools.
     # It is never interpreted as permission to submit.
     auto_prepare_outputs: bool = False
+    max_parallel_specialists: int = 1
 
     @field_validator(
         "max_session_minutes", "max_total_requests", "max_leads_per_session",
         "max_hypotheses_per_lead", "max_tests_per_hypothesis", "max_requests_per_hypothesis",
         "max_inconclusive_tests_per_hypothesis", "max_failed_tests_per_hypothesis",
         "max_redirects",
+        "max_parallel_specialists",
     )
     @classmethod
     def _positive_budget(cls, value: int) -> int:
         if value < 1:
             raise ValueError("autonomy budgets must be >= 1")
+        return value
+
+    @field_validator("max_parallel_specialists")
+    @classmethod
+    def _bounded_specialists(cls, value: int) -> int:
+        if not 1 <= value <= 2:
+            raise ValueError("max_parallel_specialists must be 1 or 2")
         return value
 
     @field_validator("max_leads_per_run")

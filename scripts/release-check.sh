@@ -15,6 +15,7 @@ runtime_version="$($python_bin -c 'import bughunt_harness; print(bughunt_harness
 node_version="$($python_bin -c 'import json; print(json.load(open("package.json"))["version"])')"
 lock_version="$($python_bin -c 'import json; print(json.load(open("package-lock.json"))["version"])')"
 mcp_version="$($python_bin -c 'from bughunt_harness.mcp.server import _make_mcp; print(_make_mcp()._mcp_server.version)')"
+"$python_bin" -c 'from pathlib import Path; from bughunt_harness.portability import personal_path_matches; matches=personal_path_matches(Path.cwd()); assert not matches, matches'
 if [ "$package_version" != "$runtime_version" ] || [ "$package_version" != "$node_version" ] || [ "$package_version" != "$lock_version" ] || [ "$package_version" != "$mcp_version" ]; then
   echo "version mismatch: package=$package_version runtime=$runtime_version node=$node_version lock=$lock_version mcp=$mcp_version" >&2
   exit 2

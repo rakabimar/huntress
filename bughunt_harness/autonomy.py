@@ -29,6 +29,29 @@ GOAL_STATUSES = {
 }
 
 
+def _lead_rank(ctx, lead) -> tuple[float, int]:
+    """Explainable bounded bonuses; never touches policy or safety controls."""
+    from .learning import ProgramLearning
+    base = {"critical": 100.0, "high": 75.0, "medium": 50.0, "low": 25.0}.get(lead.priority, 50.0)
+    new_surface = 5.0 if lead.source in {"recon", "recon-watch", "javascript"} else 0.0
+    coverage = 0.0
+    if str(lead.entity).startswith("endpoint:"):
+        try:
+            endpoint_id = int(str(lead.entity).split(":", 1)[1])
+            row = ctx.db._conn.execute(
+                "SELECT state FROM coverage_observation WHERE endpoint_id=? ORDER BY id DESC LIMIT 1",
+                (endpoint_id,),
+            ).fetchone()
+            coverage = 10.0 if row is None or row["state"] in {"DISCOVERED", "STALE_AFTER_CHANGE", "CHANGED_SINCE_TEST"} else 0.0
+        except ValueError:
+            pass
+    explained = ProgramLearning(ctx.db).explain_score(
+        base, new_surface_bonus=new_surface, coverage_bonus=coverage,
+        signal=lead.source, skill="", specialist="", surface_type="",
+    )
+    return float(explained["total"]), -lead.id
+
+
 def budget_dict(ctx: "ProgramContext") -> dict:
     data = ctx.engagement.autonomy.model_dump(
         exclude={"enabled", "goal", "stop_on_validated_finding", "auto_prepare_outputs"},
@@ -236,10 +259,7 @@ def refresh_autonomy(ctx: "ProgramContext", session_id: int) -> dict:
                     "budget": "max_leads_per_run", "run": run.public_id,
                     "usage": usage,
                 }
-            priority = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-            selected = sorted(
-                open_leads, key=lambda lead: (priority.get(lead.priority, 2), lead.id),
-            )[0]
+            selected = max(open_leads, key=lambda lead: _lead_rank(ctx, lead))
             selected = ctx.db.claim_lead(selected.id, session_id)
             ctx.db.set_active_lead(session_id, selected.id)
             usage = usage_snapshot(ctx, run)

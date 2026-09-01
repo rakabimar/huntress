@@ -800,6 +800,109 @@ CREATE TABLE IF NOT EXISTS skill_usage (
 CREATE INDEX IF NOT EXISTS idx_skill_usage_run ON skill_usage(autonomy_run_id, skill);
 """
 
+_CREATE_CAPABILITIES_V10 = """
+CREATE TABLE IF NOT EXISTS differential_result (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    mode TEXT NOT NULL DEFAULT '', baseline_request_id INTEGER,
+    request_ids TEXT NOT NULL DEFAULT '[]', research_test_id INTEGER,
+    hypothesis_id INTEGER, result TEXT NOT NULL DEFAULT '{}',
+    artifact_ref TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS oast_session (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, program TEXT NOT NULL,
+    autonomy_run_id INTEGER, research_session_id INTEGER, provider TEXT NOT NULL,
+    provider_session_reference TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL, status TEXT NOT NULL, third_party_provider INTEGER NOT NULL DEFAULT 1,
+    approval_id INTEGER, metadata TEXT NOT NULL DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS idx_oast_session_program ON oast_session(program, status);
+CREATE TABLE IF NOT EXISTS oast_probe (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, oast_session_id INTEGER NOT NULL REFERENCES oast_session(id) ON DELETE CASCADE,
+    hypothesis_id INTEGER, research_test_id INTEGER, request_id INTEGER,
+    correlation_token TEXT NOT NULL UNIQUE, callback_domain TEXT NOT NULL,
+    callback_urls TEXT NOT NULL DEFAULT '{}', expected_protocols TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL, expires_at TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'ACTIVE'
+);
+CREATE INDEX IF NOT EXISTS idx_oast_probe_test ON oast_probe(research_test_id, hypothesis_id);
+CREATE TABLE IF NOT EXISTS oast_interaction (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, probe_id INTEGER NOT NULL REFERENCES oast_probe(id) ON DELETE CASCADE,
+    provider_interaction_id TEXT NOT NULL DEFAULT '', protocol TEXT NOT NULL,
+    observed_at TEXT NOT NULL, remote_address TEXT NOT NULL DEFAULT '', request_method TEXT NOT NULL DEFAULT '',
+    hostname TEXT NOT NULL DEFAULT '', path TEXT NOT NULL DEFAULT '', sanitized_headers TEXT NOT NULL DEFAULT '{}',
+    artifact_ref TEXT NOT NULL DEFAULT '', content_hash TEXT NOT NULL DEFAULT '', dedup_fingerprint TEXT NOT NULL UNIQUE,
+    evidence_id INTEGER, metadata TEXT NOT NULL DEFAULT '{}'
+);
+CREATE TABLE IF NOT EXISTS auth_session (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, auth_context TEXT NOT NULL UNIQUE,
+    strategy TEXT NOT NULL DEFAULT 'STATIC', state TEXT NOT NULL DEFAULT 'VALID',
+    issued_at TEXT, expires_at TEXT, last_refresh TEXT, credential_ref TEXT NOT NULL DEFAULT '',
+    refresh_count INTEGER NOT NULL DEFAULT 0, last_error TEXT NOT NULL DEFAULT '', metadata TEXT NOT NULL DEFAULT '{}'
+);
+CREATE TABLE IF NOT EXISTS auth_session_event (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, auth_session_id INTEGER NOT NULL REFERENCES auth_session(id) ON DELETE CASCADE,
+    event TEXT NOT NULL, request_id INTEGER, created_at TEXT NOT NULL, metadata TEXT NOT NULL DEFAULT '{}'
+);
+CREATE TABLE IF NOT EXISTS coverage_observation (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, asset_id INTEGER, endpoint_id INTEGER,
+    method TEXT NOT NULL DEFAULT '', parameter TEXT NOT NULL DEFAULT '', auth_context_class TEXT NOT NULL DEFAULT '',
+    skill_family TEXT NOT NULL DEFAULT '', state TEXT NOT NULL, research_test_id INTEGER,
+    first_seen TEXT NOT NULL, last_seen TEXT NOT NULL, metadata TEXT NOT NULL DEFAULT '{}',
+    UNIQUE(endpoint_id, method, parameter, auth_context_class, skill_family)
+);
+CREATE TABLE IF NOT EXISTS js_artifact (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT NOT NULL UNIQUE, host TEXT NOT NULL,
+    content_hash TEXT NOT NULL, size INTEGER NOT NULL, source_map_url TEXT NOT NULL DEFAULT '',
+    first_seen TEXT NOT NULL, last_seen TEXT NOT NULL, analysis_version TEXT NOT NULL,
+    artifact_ref TEXT NOT NULL DEFAULT '', observations TEXT NOT NULL DEFAULT '{}', metadata TEXT NOT NULL DEFAULT '{}'
+);
+CREATE TABLE IF NOT EXISTS finding_fingerprint (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, finding_id INTEGER NOT NULL UNIQUE REFERENCES finding(id) ON DELETE CASCADE,
+    fingerprint TEXT NOT NULL, normalized TEXT NOT NULL DEFAULT '{}', dedup_version TEXT NOT NULL,
+    potential_duplicate_of INTEGER, duplicate_score REAL NOT NULL DEFAULT 0,
+    duplicate_reason TEXT NOT NULL DEFAULT '', classification TEXT NOT NULL DEFAULT 'DISTINCT', created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_finding_fingerprint ON finding_fingerprint(fingerprint);
+CREATE TABLE IF NOT EXISTS prior_finding (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, report_id TEXT NOT NULL, title TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT '', normalized_endpoint TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT '',
+    submitted_at TEXT, duplicate_status TEXT NOT NULL DEFAULT '', metadata TEXT NOT NULL DEFAULT '{}',
+    UNIQUE(report_id)
+);
+CREATE TABLE IF NOT EXISTS recon_watch (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, profile TEXT NOT NULL, interval_seconds INTEGER NOT NULL,
+    last_run TEXT, next_run TEXT, status TEXT NOT NULL DEFAULT 'ACTIVE', last_result TEXT NOT NULL DEFAULT '{}',
+    error_count INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, UNIQUE(profile)
+);
+CREATE TABLE IF NOT EXISTS program_learning (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, signal TEXT NOT NULL, skill TEXT NOT NULL DEFAULT '',
+    specialist TEXT NOT NULL DEFAULT '', surface_type TEXT NOT NULL DEFAULT '', attempted INTEGER NOT NULL DEFAULT 0,
+    supported INTEGER NOT NULL DEFAULT 0, candidates INTEGER NOT NULL DEFAULT 0,
+    validator_killed INTEGER NOT NULL DEFAULT 0, validated INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL, UNIQUE(signal, skill, specialist, surface_type)
+);
+CREATE TABLE IF NOT EXISTS knowledge_document (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, category TEXT NOT NULL, source_id TEXT NOT NULL,
+    title TEXT NOT NULL, summary TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '',
+    source_url TEXT NOT NULL DEFAULT '', content_hash TEXT NOT NULL, metadata TEXT NOT NULL DEFAULT '{}',
+    retrieved_at TEXT NOT NULL, UNIQUE(category, source_id, content_hash)
+);
+CREATE VIRTUAL TABLE IF NOT EXISTS knowledge_fts USING fts5(title, summary, content, content='knowledge_document', content_rowid='id');
+CREATE TRIGGER IF NOT EXISTS knowledge_ai AFTER INSERT ON knowledge_document BEGIN
+  INSERT INTO knowledge_fts(rowid,title,summary,content) VALUES(new.id,new.title,new.summary,new.content);
+END;
+CREATE TRIGGER IF NOT EXISTS knowledge_ad AFTER DELETE ON knowledge_document BEGIN
+  INSERT INTO knowledge_fts(knowledge_fts,rowid,title,summary,content) VALUES('delete',old.id,old.title,old.summary,old.content);
+END;
+CREATE TRIGGER IF NOT EXISTS knowledge_au AFTER UPDATE ON knowledge_document BEGIN
+  INSERT INTO knowledge_fts(knowledge_fts,rowid,title,summary,content) VALUES('delete',old.id,old.title,old.summary,old.content);
+  INSERT INTO knowledge_fts(rowid,title,summary,content) VALUES(new.id,new.title,new.summary,new.content);
+END;
+CREATE TABLE IF NOT EXISTS specialist_task_lease (
+    task_id INTEGER PRIMARY KEY REFERENCES specialist_task(id) ON DELETE CASCADE,
+    lease_owner TEXT NOT NULL, acquired_at TEXT NOT NULL, heartbeat_at TEXT NOT NULL, expires_at TEXT NOT NULL
+);
+"""
+
 
 def _migration_v3(conn: sqlite3.Connection) -> None:
     """v2 -> v3: autonomous runs and security-principal/linkage integrity."""
@@ -872,6 +975,17 @@ def _migration_v9(conn: sqlite3.Connection) -> None:
         "UPDATE specialist_task SET creator_session_id=session_id "
         "WHERE creator_session_id IS NULL AND session_id IS NOT NULL"
     )
+
+
+def _migration_v10(conn: sqlite3.Connection) -> None:
+    """v9 -> v10: replay, differential, OAST, lifecycle, coverage and learning."""
+    _add_column(conn, "request_record", "parent_request_id", "INTEGER")
+    _add_column(conn, "request_record", "root_request_id", "INTEGER")
+    _add_column(conn, "request_record", "replay_depth", "INTEGER NOT NULL DEFAULT 0")
+    _add_column(conn, "request_record", "mutation_summary", "TEXT NOT NULL DEFAULT ''")
+    _add_column(conn, "finding", "dedup_classification", "TEXT NOT NULL DEFAULT ''")
+    _add_column(conn, "finding", "potential_duplicate_of", "INTEGER")
+    conn.executescript(_CREATE_CAPABILITIES_V10)
     conn.execute(
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_tool_call_invocation "
         "ON tool_call(invocation_id) WHERE invocation_id<>''"
@@ -909,6 +1023,7 @@ _MIGRATIONS: dict[int, object] = {
     7: _migration_v7,
     8: _migration_v8,
     9: _migration_v9,
+    10: _migration_v10,
 }
 
 
@@ -1340,6 +1455,12 @@ class HuntDB:
                     run.id, creator_session_id, "FINDING_CREATED", "finding", finding.id,
                     {"hypothesis_id": hypothesis_id, "lead_id": lead_id},
                 )
+        from ..dedup import FindingDeduplicator
+        FindingDeduplicator(self).register(
+            finding.id, category=category, target=affected_target,
+            impact=impact_summary,
+        )
+        finding = self.get_finding(finding.id)
         return finding
 
     def get_finding(self, finding_id: int) -> FindingRecord:
@@ -1357,6 +1478,8 @@ class HuntDB:
             test_ids=_jload(row["test_ids"], []),
             creator_session_id=row["creator_session_id"], linkage_state=row["linkage_state"],
             poc_path=row["poc_path"],
+            dedup_classification=row["dedup_classification"],
+            potential_duplicate_of=row["potential_duplicate_of"],
         )
 
     def list_findings(self, status: str | None = None) -> list[FindingRecord]:
@@ -1980,17 +2103,21 @@ class HuntDB:
         response_metadata: dict | None = None, burp_ref: str = "",
         body_hash: str = "", evidence_ref: str = "", research_test_id: int | None = None,
         hypothesis_id: int | None = None, controlled_mutation: dict | None = None,
+        parent_request_id: int | None = None, root_request_id: int | None = None,
+        replay_depth: int = 0, mutation_summary: str = "",
     ) -> RequestRecord:
         run = self.active_autonomy_run(session_id) if session_id is not None else None
         with self._lock:
             cur = self._conn.execute(
                 "INSERT INTO request_record(program,session_id,auth_context,method,url,"
                 "request_metadata,response_metadata,burp_ref,body_hash,evidence_ref,research_test_id,"
-                "hypothesis_id,controlled_mutation,autonomy_run_id,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "hypothesis_id,controlled_mutation,autonomy_run_id,parent_request_id,root_request_id,"
+                "replay_depth,mutation_summary,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (program, session_id, auth_context, method, url,
                  _jdump(request_metadata or {}), _jdump(response_metadata or {}),
                  burp_ref, body_hash, evidence_ref, research_test_id, hypothesis_id,
-                 _jdump(controlled_mutation or {}), run.id if run else None, utcnow()),
+                 _jdump(controlled_mutation or {}), run.id if run else None,
+                 parent_request_id, root_request_id, replay_depth, mutation_summary, utcnow()),
             )
             self._conn.commit()
             row = self._fetch("request_record", cur.lastrowid)
@@ -2004,13 +2131,47 @@ class HuntDB:
             research_test_id=row["research_test_id"], hypothesis_id=row["hypothesis_id"],
             controlled_mutation=_jload(row["controlled_mutation"], {}),
             autonomy_run_id=row["autonomy_run_id"],
+            parent_request_id=row["parent_request_id"], root_request_id=row["root_request_id"],
+            replay_depth=row["replay_depth"], mutation_summary=row["mutation_summary"],
         )
         if run is not None:
             self.record_autonomy_activity(
                 run.id, run.session_id, "REQUEST_SENT", "request_record", record.id,
                 {"hypothesis_id": hypothesis_id, "research_test_id": research_test_id},
             )
+        if research_test_id is not None:
+            self._record_request_coverage(record)
         return record
+
+    def _record_request_coverage(self, record: RequestRecord) -> None:
+        """Best-effort automatic observed coverage for executed research traffic."""
+        from urllib.parse import urlsplit
+        from ..recon import normalize_endpoint_path
+        parsed = urlsplit(record.url); host = (parsed.hostname or "").lower()
+        normalized_path, _ = normalize_endpoint_path(parsed.path or "/")
+        with self._lock:
+            endpoint = self._conn.execute(
+                "SELECT e.id FROM endpoint e JOIN asset a ON a.id=e.host_asset_id "
+                "WHERE a.normalized_value=? AND e.method=? AND e.normalized_path=? LIMIT 1",
+                (host, record.method.upper(), normalized_path),
+            ).fetchone()
+            if endpoint is None:
+                return
+            mutation = record.controlled_mutation or {}
+            items = mutation.get("mutations", []) if isinstance(mutation, dict) else []
+            first = items[0] if items else mutation
+            parameter = str(first.get("field", "")) if isinstance(first, dict) else ""
+            skill = str(first.get("source_skill", "")) if isinstance(first, dict) else ""
+            now = utcnow()
+            self._conn.execute(
+                "INSERT INTO coverage_observation(endpoint_id,method,parameter,auth_context_class,skill_family,state,"
+                "research_test_id,first_seen,last_seen,metadata) VALUES(?,?,?,?,?,'TESTED',?,?,?,?) "
+                "ON CONFLICT(endpoint_id,method,parameter,auth_context_class,skill_family) DO UPDATE SET "
+                "state='TESTED',research_test_id=excluded.research_test_id,last_seen=excluded.last_seen",
+                (endpoint["id"], record.method.upper(), parameter, record.auth_context, skill,
+                 record.research_test_id, now, now, _jdump({"request_id": record.id})),
+            )
+            self._conn.commit()
 
     def list_request_records(self, session_id: int | None = None) -> list[RequestRecord]:
         q = "SELECT id FROM request_record"
@@ -2023,6 +2184,28 @@ class HuntDB:
             rows = self._conn.execute(q, args).fetchall()
         return [self._request_from_row(self._fetch("request_record", r["id"])) for r in rows]
 
+    def get_request_record(self, request_id: int) -> RequestRecord:
+        return self._request_from_row(self._fetch("request_record", request_id))
+
+    def save_differential_result(
+        self, *, mode: str, baseline_request_id: int | None, request_ids: list[int],
+        result: dict, research_test_id: int | None = None, hypothesis_id: int | None = None,
+        artifact_ref: str = "",
+    ) -> int:
+        if baseline_request_id is not None:
+            self.get_request_record(baseline_request_id)
+        for request_id in request_ids:
+            self.get_request_record(request_id)
+        with self._lock:
+            cur = self._conn.execute(
+                "INSERT INTO differential_result(mode,baseline_request_id,request_ids,research_test_id,"
+                "hypothesis_id,result,artifact_ref,created_at) VALUES(?,?,?,?,?,?,?,?)",
+                (mode, baseline_request_id, _jdump(request_ids), research_test_id,
+                 hypothesis_id, _jdump(result), artifact_ref, utcnow()),
+            )
+            self._conn.commit()
+            return int(cur.lastrowid)
+
     def _request_from_row(self, row: sqlite3.Row) -> RequestRecord:
         return RequestRecord(
             id=row["id"], public_id=self.public_id("request_record", row["id"]),
@@ -2034,6 +2217,8 @@ class HuntDB:
             research_test_id=row["research_test_id"], hypothesis_id=row["hypothesis_id"],
             controlled_mutation=_jload(row["controlled_mutation"], {}),
             autonomy_run_id=row["autonomy_run_id"],
+            parent_request_id=row["parent_request_id"], root_request_id=row["root_request_id"],
+            replay_depth=row["replay_depth"], mutation_summary=row["mutation_summary"],
         )
 
     # ------------------------------------------------------------------ #
@@ -2399,6 +2584,12 @@ class HuntDB:
                 (recon_run_id, change_type, entity_type, entity_id, old_value, new_value, int(interest_score), utcnow()),
             )
             row = self._conn.execute("SELECT * FROM recon_change WHERE recon_run_id=? AND change_type=? AND entity_type=? AND entity_id=? AND new_value=?", (recon_run_id, change_type, entity_type, entity_id, new_value)).fetchone()
+            if entity_type == "endpoint" and change_type not in {"ENDPOINT_DISCOVERED", "NEW_ENDPOINT"}:
+                self._conn.execute(
+                    "UPDATE coverage_observation SET state='STALE_AFTER_CHANGE',last_seen=? "
+                    "WHERE endpoint_id=? AND state IN ('BASELINED','TESTED','EXHAUSTED_FOR_HYPOTHESIS')",
+                    (utcnow(), entity_id),
+                )
             self._conn.commit()
         return self._recon_row("recon_change", row)
 
@@ -2853,6 +3044,68 @@ class HuntDB:
     def get_specialist_task(self, task_id: int) -> dict:
         return self._telemetry_row("specialist_task", self._fetch("specialist_task", task_id))
 
+    def claim_specialist_task(
+        self, task_id: int, *, lease_owner: str, claimed_session_id: int,
+        lease_seconds: int = 120, max_parallel: int = 1,
+    ) -> dict:
+        """Atomically lease one independent pending Lead task."""
+        session = self.require_session(claimed_session_id, running=True)
+        now = datetime.now(timezone.utc); expires = now + timedelta(seconds=max(15, min(lease_seconds, 600)))
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                stale = [item["task_id"] for item in self._conn.execute(
+                    "SELECT task_id FROM specialist_task_lease WHERE expires_at<=?", (now.isoformat(),)
+                ).fetchall()]
+                for stale_id in stale:
+                    self._conn.execute(
+                        "UPDATE specialist_task SET status='PENDING',claimed_session_id=NULL,error='stale lease recovered' "
+                        "WHERE id=? AND status='RUNNING'", (stale_id,),
+                    )
+                self._conn.execute("DELETE FROM specialist_task_lease WHERE expires_at<=?", (now.isoformat(),))
+                row = self._conn.execute("SELECT * FROM specialist_task WHERE id=?", (task_id,)).fetchone()
+                if row is None or row["status"] != "PENDING":
+                    raise StateError("specialist task is not pending")
+                if session.agent_role != row["assigned_role"]:
+                    raise StateError("claimed session role does not match specialist task")
+                running = self._conn.execute(
+                    "SELECT COUNT(*) FROM specialist_task_lease l JOIN specialist_task t ON t.id=l.task_id "
+                    "WHERE t.autonomy_run_id IS ?", (row["autonomy_run_id"],),
+                ).fetchone()[0]
+                if running >= max(1, min(int(max_parallel), 2)):
+                    raise StateError("bounded specialist parallelism limit reached")
+                if row["lead_id"] is not None:
+                    conflict = self._conn.execute(
+                        "SELECT 1 FROM specialist_task_lease l JOIN specialist_task t ON t.id=l.task_id "
+                        "WHERE t.lead_id=? LIMIT 1", (row["lead_id"],),
+                    ).fetchone()
+                    if conflict:
+                        raise StateError("another specialist already holds this Lead")
+                self._conn.execute(
+                    "INSERT INTO specialist_task_lease(task_id,lease_owner,acquired_at,heartbeat_at,expires_at) VALUES(?,?,?,?,?)",
+                    (task_id, lease_owner, now.isoformat(), now.isoformat(), expires.isoformat()),
+                )
+                self._conn.execute(
+                    "UPDATE specialist_task SET status='RUNNING',started_at=?,claimed_session_id=? WHERE id=? AND status='PENDING'",
+                    (utcnow(), claimed_session_id, task_id),
+                )
+                self._conn.commit()
+            except Exception:
+                self._conn.rollback(); raise
+        return self.get_specialist_task(task_id)
+
+    def heartbeat_specialist_task(self, task_id: int, *, lease_owner: str, lease_seconds: int = 120) -> dict:
+        now = datetime.now(timezone.utc); expires = now + timedelta(seconds=max(15, min(lease_seconds, 600)))
+        with self._lock:
+            cur = self._conn.execute(
+                "UPDATE specialist_task_lease SET heartbeat_at=?,expires_at=? WHERE task_id=? AND lease_owner=?",
+                (now.isoformat(), expires.isoformat(), task_id, lease_owner),
+            )
+            if cur.rowcount != 1:
+                raise StateError("specialist task lease is missing or owned by another worker")
+            self._conn.commit()
+        return self.get_specialist_task(task_id)
+
     def update_specialist_task(
         self, task_id: int, *, status: str, result_summary: str = "",
         result_refs: list[str] | None = None, tokens: int = 0, cost: float = 0,
@@ -2883,8 +3136,10 @@ class HuntDB:
                 "UPDATE specialist_task SET status=?,result_summary=?,result_refs=?,started_at=?,completed_at=?,tokens=?,cost=?,duration_ms=?,claimed_session_id=COALESCE(?,claimed_session_id),error=?,model=?,runtime=?,metadata=? WHERE id=?",
                 (status, result_summary, _jdump(result_refs or []), started, completed,
                  max(0, tokens), max(0.0, cost), max(0, duration_ms), claimed_session_id,
-                 error[:2000], model[:200], runtime[:100], _jdump(merged), task_id),
+                error[:2000], model[:200], runtime[:100], _jdump(merged), task_id),
             )
+            if status in {"COMPLETED", "FAILED", "CANCELLED", "TIMED_OUT"}:
+                self._conn.execute("DELETE FROM specialist_task_lease WHERE task_id=?", (task_id,))
             self._conn.commit(); updated = self._fetch("specialist_task", task_id)
         return self._telemetry_row("specialist_task", updated)
 

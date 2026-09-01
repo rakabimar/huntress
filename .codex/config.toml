@@ -7,6 +7,6 @@ sandbox_mode = "workspace-write"
 network_access = false
 
 [mcp_servers.bughunt]
-command = "/mnt/c/Users/Lenovo/Documents/Pacil/PERKODINGAN/Cyber_Security/bug_bounty/harness"
+command = "./harness"
 args = ["mcp", "serve"]
 required = true

@@ -44,3 +44,6 @@ Public identifiers, public profiles, team sharing, delegated access, organizatio
 Stop on Scope/Policy denial, unknown authorization, unavailable controlled principals/objects, third-party data exposure, R3/R4 without approval, or when the next request cannot distinguish the hypothesis. Never enumerate foreign identifiers or promote an existence oracle alone.
 
 Load references/attack-surface.md for batch, jobs, GraphQL, lifecycle, version, and framework-specific analysis; load references/methodology.md for the full matrix and decision tree.
+
+## Capability guidance
+Prefer `compare_authorized_request` for an owner baseline followed by the exact same object/operation as another explicit AuthContext. Use `replay_request` with one structured mutation for object or nested-property IDs; inspect the structured response diff as an observation, never an automatic IDOR verdict.

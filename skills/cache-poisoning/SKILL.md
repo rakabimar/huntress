@@ -57,3 +57,5 @@ content through an unkeyed input; deception stores the wrong private response.
 
 ## Example
 On `https://cache.example.test/home`, a hypothesis: an unkeyed `X-Forwarded-Host` header rewrites asset links. First request via send_authorized_http_request adds `X-Forwarded-Host: attacker.test`; the response links to `attacker.test`. A second request to the same URL with no such header, hitting the same fixture cache, still returns links to `attacker.test`. That persistent mismatch is the poisoning proof, recorded as `request_response` evidence with the payload pointed at `attacker.test` only.
+
+Use one structured header mutation, replay the clean baseline, and compare cache headers/body clusters deterministically. The differential remains an observation until persistence and boundary impact are shown.

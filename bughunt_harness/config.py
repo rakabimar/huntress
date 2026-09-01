@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 ENV_HOME = "BUGHUNT_HOME"
+ENV_PROJECT_ROOT = "BUGHUNT_PROJECT_ROOT"
 ENV_PROGRAMS_DIR = "BUGHUNT_PROGRAMS_DIR"
 ENV_CONFIG = "BUGHUNT_CONFIG"
 ENV_ACTIVE_PROGRAM = "BUGHUNT_ACTIVE_PROGRAM"
@@ -24,6 +25,64 @@ ENV_PLAYWRIGHT_PACKAGE = "BUGHUNT_PLAYWRIGHT_PACKAGE"
 def _default_home() -> Path:
     return Path(os.environ.get(ENV_HOME, Path.home() / ".bughunt"))
 
+
+def _discover_project_root() -> Path:
+    """Resolve the installed source/distribution root without CWD assumptions."""
+    override = os.environ.get(ENV_PROJECT_ROOT)
+    if override:
+        return Path(override).expanduser().resolve()
+    candidate = Path(__file__).resolve().parents[1]
+    if (candidate / "pyproject.toml").is_file() or (candidate / "harness").is_file():
+        return candidate
+    return Path(__file__).resolve().parent
+
+
+@dataclass(frozen=True)
+class HarnessPaths:
+    """Authoritative immutable path layout for source and mutable user state."""
+
+    project_root: Path = field(default_factory=_discover_project_root)
+    bughunt_home: Path = field(default_factory=_default_home)
+    programs_root: Path | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "project_root", Path(self.project_root).expanduser().resolve())
+        object.__setattr__(self, "bughunt_home", Path(self.bughunt_home).expanduser().resolve())
+        if self.programs_root is None:
+            value = os.environ.get(ENV_PROGRAMS_DIR)
+            object.__setattr__(self, "programs_root", Path(value).expanduser().resolve() if value else self.bughunt_home / "programs")
+
+    @property
+    def secrets_root(self) -> Path:
+        return self.bughunt_home / "secrets"
+
+    @property
+    def cache_root(self) -> Path:
+        return self.bughunt_home / "cache"
+
+    @property
+    def generated_root(self) -> Path:
+        return self.project_root / "generated"
+
+    @property
+    def skills_root(self) -> Path:
+        return self.project_root / "skills"
+
+    @property
+    def agent_specs_root(self) -> Path:
+        return self.project_root / "agent-specs"
+
+    @property
+    def certs_root(self) -> Path:
+        return self.bughunt_home / "certs"
+
+    @property
+    def temporary_root(self) -> Path:
+        return self.bughunt_home / "tmp"
+
+    @property
+    def distribution_root(self) -> Path:
+        return self.project_root
 
 @dataclass(frozen=True)
 class HarnessConfig:
@@ -41,13 +100,23 @@ class HarnessConfig:
     playwright_package: str | None = None
     intake_max_age_hours: int = 24
     intake_refresh_before_hunt: bool = True
+    paths: HarnessPaths | None = None
+    oast_config: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        paths = self.paths or HarnessPaths(bughunt_home=self.home, programs_root=self.programs_dir)
+        object.__setattr__(self, "paths", paths)
+        object.__setattr__(self, "home", paths.bughunt_home)
         # Frozen dataclass: resolve lazily via object.__setattr__.
         if self.programs_dir is None:
             object.__setattr__(
                 self, "programs_dir", Path(os.environ.get(ENV_PROGRAMS_DIR, self.home / "programs"))
             )
+        if self.paths is not None and self.paths.programs_root != self.programs_dir:
+            object.__setattr__(self, "paths", HarnessPaths(
+                project_root=self.paths.project_root, bughunt_home=self.home,
+                programs_root=Path(self.programs_dir),
+            ))
         if self.config_file is None:
             object.__setattr__(self, "config_file", Path(os.environ.get(ENV_CONFIG, self.home / "config.yaml")))
         config_data: dict = {}
@@ -61,6 +130,9 @@ class HarnessConfig:
         integrations = config_data.get("integrations", {}) if isinstance(config_data, dict) else {}
         burp = integrations.get("burp", {}) if isinstance(integrations, dict) else {}
         playwright = integrations.get("playwright", {}) if isinstance(integrations, dict) else {}
+        oast = config_data.get("oast", {}) if isinstance(config_data, dict) else {}
+        if not self.oast_config and isinstance(oast, dict):
+            object.__setattr__(self, "oast_config", dict(oast))
         intake = config_data.get("program_intake", config_data.get("intake", {})) if isinstance(config_data, dict) else {}
         if isinstance(intake, dict):
             object.__setattr__(self, "intake_max_age_hours", max(1, int(intake.get("max_age_hours", self.intake_max_age_hours))))
@@ -70,18 +142,18 @@ class HarnessConfig:
         if self.burp_proxy is None:
             object.__setattr__(
                 self, "burp_proxy",
-                burp.get("proxy_url") or burp.get("proxy") or os.environ.get(ENV_BURP_PROXY),
+                os.environ.get(ENV_BURP_PROXY) or burp.get("proxy_url") or burp.get("proxy"),
             )
         if self.burp_mcp is None:
             object.__setattr__(
                 self, "burp_mcp",
-                burp.get("mcp_url") or burp.get("mcp") or os.environ.get(ENV_BURP_MCP)
+                os.environ.get(ENV_BURP_MCP) or burp.get("mcp_url") or burp.get("mcp")
                 or "http://127.0.0.1:9876",
             )
         if self.burp_ca is None:
             object.__setattr__(
                 self, "burp_ca",
-                burp.get("ca_bundle") or os.environ.get(ENV_BURP_CA),
+                os.environ.get(ENV_BURP_CA) or burp.get("ca_bundle"),
             )
         if self.playwright_package is None:
             object.__setattr__(
@@ -108,7 +180,11 @@ class HarnessConfig:
 
     def ensure_dirs(self) -> None:
         """Create the global home directory tree (idempotent)."""
-        for p in (self.home, self.programs_dir, self.secrets_dir, self.logs_dir):
+        assert self.paths is not None
+        for p in (
+            self.home, self.programs_dir, self.secrets_dir, self.logs_dir,
+            self.paths.cache_root, self.paths.certs_root, self.paths.temporary_root,
+        ):
             if p is not None:
                 p.mkdir(parents=True, exist_ok=True)
 
@@ -125,6 +201,10 @@ class HarnessConfig:
                 "  playwright:\n"
                 "    package: '@playwright/mcp'\n"
                 "    headed: true\n"
+                "oast:\n"
+                "  provider: null  # interactsh or generic; third-party use remains policy-gated\n"
+                "  interactsh_server: null  # omit for official client defaults\n"
+                "  generic: {}  # base_domain, allocate_endpoint, poll_endpoint, token_ref\n"
                 "program_intake:\n"
                 "  max_age_hours: 24\n"
                 "  refresh_before_hunt: true\n",
@@ -141,6 +221,13 @@ def load_config() -> HarnessConfig:
 
 
 _default_config: HarnessConfig | None = None
+
+
+def get_paths() -> HarnessPaths:
+    """Return the process path layout used by all adapters and services."""
+    cfg = get_config()
+    assert cfg.paths is not None
+    return cfg.paths
 
 
 def get_config() -> HarnessConfig:

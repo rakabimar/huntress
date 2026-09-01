@@ -41,3 +41,5 @@ Decode without acceptance, algorithm listed but not accepted, kid/jku parsed but
 Stop before forging real users, brute-forcing keys, stealing signing material, OOB/internal fetches outside ROE, or replaying production credentials. ASK for stateful/high-risk token substitution; DENY destructive use.
 
 Load references/attack-surface.md for verifier decision trees and multi-service comparisons; use OAuth/OIDC when token issuance or browser transaction binding is the actual question.
+
+Treat JWT `exp` only as advisory lifecycle metadata. Prefer AuthSession-managed refresh and exact request replay; never copy a token into a mutation.

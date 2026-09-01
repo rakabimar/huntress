@@ -26,7 +26,7 @@ def config_toml() -> str:
         "network_access = false\n"
         "\n"
         "[mcp_servers.bughunt]\n"
-        f'command = "{base.REPO_ROOT / "harness"}"\n'
+        'command = "./harness"\n'
         'args = ["mcp", "serve"]\n'
         "required = true\n"
     )

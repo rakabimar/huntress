@@ -1,5 +1,7 @@
 # Portable AI Bug Hunting Harness
 
+Capability completion adds canonical request replay/mutation and lineage, structured response differences, dual-AuthContext comparisons, policy-gated OAST correlation, optional session lifecycle, observed-surface coverage, JavaScript intelligence, finding deduplication, bounded races/mutation/watch/learning, multi-language taint depth labels, an FTS knowledge store, and centralized portable paths. See the focused documents under `docs/`; all target traffic still goes through the Request Broker.
+
 A program-isolated, hypothesis-driven, evidence-gated operating environment that
 lets **Claude Code**, **Codex**, and **OpenCode** act as interchangeable AI
 research runtimes over a shared methodology, skill library, program scope, Rules
@@ -134,6 +136,13 @@ report  mcp  sync  start  hunt  hook
 `finding {create,validate,adjudicate,reject,cvss}`, `report {generate,qa}`,
 `cvss <vector>`, `skill {list,validate,eval}`, `sync [--runtime …]`,
 `start {claude,codex,opencode}`, `mcp {status,serve}`.
+
+Run the integrated completion acceptance entirely on loopback with a synthetic
+OAST provider (no model and no public network):
+
+```bash
+./harness acceptance capability-smoke
+```
 
 ---
 

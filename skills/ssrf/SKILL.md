@@ -46,3 +46,5 @@ Read references/attack-surface.md for parser and redirect decision trees and fra
 Use source search/AST evidence to narrow parser behavior first. Use
 `policy_preflight` and the request broker for one unique callback or local
 fixture request. Do not use generic scanners or broad internal probing.
+
+Prefer in-band proof. For a genuinely blind case, create one OAST probe bound to the current hypothesis/test, send one minimal Broker request, link its RequestRecord, then poll for exact correlation. Do not use OAST when an in-band discriminator exists.

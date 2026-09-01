@@ -46,3 +46,5 @@ Read references/attack-surface.md for lifecycle/event matrices and deployment-sp
 Use Playwright only to establish controlled browser sessions. Use
 `policy_preflight` before logout, revocation, or factor changes and the request
 broker for the exact replay. Never paste session values into model context.
+
+Inspect `get_auth_session_status` and bounded refresh/rotation/invalidation metadata. Let the lifecycle manager refresh once on confident expiry; MFA/CAPTCHA remains `WAITING_HUMAN`.

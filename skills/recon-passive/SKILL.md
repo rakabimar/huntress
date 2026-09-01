@@ -46,3 +46,5 @@ Always redact secrets and PII from stored previews.
 
 ## Example
 For scope `example.test`, hypothesize that public sources expose more than the two documented hosts. Query read-only DNS (A/AAAA/CNAME/MX) and the certificate transparency log for `example.test`, plus a whois lookup for the registrant. The checks `supports` the hypothesis when they surface `mail.example.test` and `api.example.test`. Record each discovered name as a lead and every query as evidence, then stop at the lead stage — no probe against live hosts.
+
+Track observed-surface coverage and bundle hash changes. Watch mode remains passive by default; new JavaScript endpoints and changed/stale high-interest surfaces may raise Leads but never Findings.

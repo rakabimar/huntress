@@ -70,6 +70,7 @@ ACTIONS: dict[str, Action] = {
     "bounded_scan": Action("bounded_scan", RiskClass.R3, "Explicitly bounded approved scanning plan", group="recon"),
     "race_test": Action("race_test", RiskClass.R3, "Concurrent/race-condition testing", group="logic"),
     "oob_test": Action("oob_test", RiskClass.R3, "Out-of-band interaction testing (callbacks/burp collaborator)", group="observe"),
+    "third_party_communication": Action("third_party_communication", RiskClass.R3, "Communicate with a configured third-party research provider", group="observe"),
     "brute_force": Action("brute_force", RiskClass.R3, "Credential/identifier brute forcing", group="identity"),
     "dos": Action("dos", RiskClass.R4, "Denial-of-service testing", group="destructive"),
     "destructive": Action("destructive", RiskClass.R4, "Destructive / irrecoverable actions", group="destructive"),

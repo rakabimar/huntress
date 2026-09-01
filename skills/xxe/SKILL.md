@@ -45,3 +45,5 @@ XXE happens when an XML parser resolves external entities, letting an attacker r
 
 ## Example
 An internal API at `https://service.example.test/parse` accepts an XML body and echoes the `note` field. Send `<?xml version="1.0"?><!DOCTYPE n [<!ENTITY e "test">]><n><note>&e;</note></n>` and observe `test` returned, confirming resolution. Then hypothesize a file read and send `<!DOCTYPE n [<!ENTITY e SYSTEM "file:///etc/hostname">]>` with `&e;` in the echoed field. If the hostname is reflected verbatim, a direct file read is demonstrated; if only a callback to `https://exfil.example.test/?x=` arrives after an external DTD payload, classify it as blind XXE.
+
+For blind validation, use one policy-approved OAST probe and exact request linkage. A provider callback without the probe/test/request correlation tuple is not evidence.

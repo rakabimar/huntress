@@ -54,3 +54,5 @@ A race condition occurs when an operation's check (validating balance, uniquenes
 
 ## Example
 On `https://shop.example.test` the `/api/redeem` endpoint reads a coupon's `used` flag and then marks it used. Send two identical redeems for one coupon through the broker in parallel. If the flag update is not atomic, both return success and the coupon is spent twice. Refuting observation: the second request returns `409` already-used. Record both responses as evidence and note the interleaving gap between the balance read and the balance write.
+
+Use a baseline, an approved `ConcurrentRequestPlan`, response clusters, and a post-condition read. Barrier mode is application-thread synchronization, not last-byte/single-packet. Never call a race from response variation alone.

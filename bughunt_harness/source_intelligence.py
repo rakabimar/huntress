@@ -246,6 +246,9 @@ class SourceIntelligence:
         security_files: list[str] = []
         unresolved: list[str] = []
         files_read = 0
+        taint_observations: list[dict] = []
+        from .whitebox_taint import MultiLanguageTaintAnalyzer
+        taint_analyzer = MultiLanguageTaintAnalyzer()
         for path in self.snapshot.rglob("*"):
             if files_read >= self.max_files:
                 unresolved.append(f"source index stopped at the configured {self.max_files}-file budget")
@@ -256,6 +259,9 @@ class SourceIntelligence:
             rel = str(path.relative_to(self.snapshot))
             language = LANGUAGES[path.suffix.lower()]; languages[language] += 1
             text = path.read_text(encoding="utf-8", errors="replace")
+            if language in {"JavaScript", "TypeScript", "Java", "Kotlin", "Go", "PHP"}:
+                for observation in taint_analyzer.analyze(text, language.lower())[:100]:
+                    taint_observations.append({**observation.__dict__, "file": rel})
             if re.search(r"(?i)(auth|permission|policy|tenant|session|webhook|upload|parser|plugin)", rel):
                 security_files.append(rel)
             parsed_for_file: list[dict] = []
@@ -323,6 +329,7 @@ class SourceIntelligence:
             "data_stores": sorted(data_stores), "security_invariants": invariants,
             "unresolved_questions": list(dict.fromkeys(unresolved))[:200],
             "symbols": symbols[:20_000],
+            "taint_observations": taint_observations[:2000],
             "metadata": {"languages": dict(languages), "files_read": files_read,
                          "security_critical_files": security_files[:200],
                          "analysis_levels": ["AST" if languages.get("Python") else "syntax-aware", "tree-sitter_optional", "framework_adapters", "lexical_fallback"]},

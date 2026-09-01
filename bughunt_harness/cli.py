@@ -177,6 +177,41 @@ def _acceptance_recover_whitebox_model_smoke(args) -> int:
     return 0 if result.ok else 1
 
 
+def _acceptance_oast_smoke(args) -> int:
+    """Explicit real-provider smoke using only a harness-controlled callback."""
+    import secrets as random_secrets
+    import time
+    import requests
+    from .oast import InteractshProvider
+
+    provider = InteractshProvider(server=args.server or "")
+    if not provider.capabilities().available:
+        _dump({"ok": False, "status": "NOT_RUN", "reason": "interactsh-client is not installed"}); return 2
+    session = provider.create_session(expires_in=300)
+    try:
+        probe = provider.allocate_probe(session["reference"], random_secrets.token_hex(16))
+        callback = probe["urls"]["HTTPS"]
+        requests.get(callback, timeout=15)
+        deadline = time.monotonic() + min(args.wait, 120)
+        interactions = []
+        while time.monotonic() < deadline and not interactions:
+            interactions = [item for item in provider.poll(session["reference"]) if item.hostname.lower().rstrip(".") == probe["domain"].lower()]
+            if not interactions: time.sleep(2)
+        _dump({"ok": bool(interactions), "provider": args.provider, "exact_correlation": bool(interactions), "interaction_count": len(interactions)})
+        return 0 if interactions else 1
+    finally:
+        provider.close(session["reference"])
+
+
+def _acceptance_capability_smoke(_args) -> int:
+    """Run the deterministic, wholly local completion acceptance."""
+    from .capability_acceptance import run_capability_completion_smoke
+
+    result = run_capability_completion_smoke()
+    _dump(result.as_dict())
+    return 0 if result.ok else 1
+
+
 # --- program ---------------------------------------------------------------
 def _program_create(args) -> int:
     from .registry import ProgramRegistry, utcnow
@@ -1537,6 +1572,29 @@ def _recon_summary(args) -> int:
     return 0
 
 
+def _recon_watch(args) -> int:
+    import time
+    from .recon import run_authorized_recon
+    from .watch import ReconWatchService
+    interval = _duration_seconds(args.interval)
+    with _ctx(args.program) as ctx:
+        session = _bound_or_new_session(ctx, "recon-specialist")
+        watch = ReconWatchService(ctx); watch.configure(args.profile, interval)
+        def runner(profile):
+            return run_authorized_recon(ctx, profile=profile, stage=None, seeds=[], session_id=session.id, max_results=args.max_results, timeout_seconds=args.timeout).as_dict()
+        while True:
+            _dump(watch.run_once(args.profile, runner))
+            if args.once: break
+            time.sleep(interval)
+    return 0
+
+
+def _duration_seconds(value: str) -> int:
+    raw = value.strip().lower(); units = {"s": 1, "m": 60, "h": 3600, "d": 86400}
+    if raw[-1:] in units: return int(float(raw[:-1]) * units[raw[-1]])
+    return int(raw)
+
+
 def _recon_install_guide(args) -> int:
     from .recon import detect_recon_tools
     tools = detect_recon_tools()
@@ -1550,6 +1608,117 @@ def _auth_list(args) -> int:
         _dump({"program": ctx.slug, "auth_contexts": ctx.secrets.account_summaries(
             ctx.engagement.accounts.accounts,
         )})
+    return 0
+
+
+def _auth_lifecycle(args) -> int:
+    from .auth import AuthSessionManager
+    with _ctx(args.program) as ctx:
+        manager = AuthSessionManager(ctx)
+        if args.sub == "status": result = manager.status(args.context or None)
+        elif args.sub == "invalidate": result = manager.invalidate(args.context)
+        else:
+            session = _bound_or_new_session(ctx, "auth-identity-specialist")
+            result = manager.login(args.context, session_id=session.id) if args.sub == "login" else manager.refresh(args.context, session_id=session.id)
+            result.pop("credential_ref", None); result.get("metadata", {}).pop("refresh_ref", None)
+        _dump(result)
+    return 0
+
+
+def _request_replay(args) -> int:
+    from .requests.replay import ReplayService
+    from .requests.templates import RequestMutation
+    mutations = [RequestMutation(**json.loads(value)) for value in args.mutation]
+    with _ctx(args.program) as ctx:
+        session = _bound_or_new_session(ctx, "researcher")
+        result = ReplayService(ctx).replay_request(_parse_id(args.request), mutations=mutations, auth_context=args.auth, session_id=session.id)
+        _dump(result.as_dict()); return 0 if result.ok else 2
+
+
+def _response_compare(args) -> int:
+    from .requests.response_diff import ResponseComparator
+    with _ctx(args.program) as ctx:
+        records = [ctx.db.get_request_record(_parse_id(item)) for item in args.requests]
+        _dump(ResponseComparator(ignore_json_paths=set(args.ignore_json_path)).compare_records(records, workspace=ctx.workspace).as_dict())
+    return 0
+
+
+def _coverage_summary(args) -> int:
+    from .coverage import CoverageTracker
+    with _ctx(args.program) as ctx: _dump(CoverageTracker(ctx).summary())
+    return 0
+
+
+def _oast_command(args) -> int:
+    from .oast import GenericConfiguredProvider, InteractshProvider, OASTService
+    with _ctx(args.program) as ctx:
+        oast_config = get_config().oast_config
+        interactsh_server = getattr(args, "server", "") or str(oast_config.get("interactsh_server") or "")
+        providers = {"interactsh": InteractshProvider(server=interactsh_server)}
+        generic = oast_config.get("generic") if isinstance(oast_config.get("generic"), dict) else {}
+        if generic and all(generic.get(key) for key in ("base_domain", "allocate_endpoint", "poll_endpoint")):
+            token = ctx.secrets.resolve(generic.get("token_ref")) if generic.get("token_ref") else ""
+            providers["generic"] = GenericConfiguredProvider(
+                base_domain=str(generic["base_domain"]),
+                allocate_endpoint=str(generic["allocate_endpoint"]),
+                poll_endpoint=str(generic["poll_endpoint"]), token=token or "",
+            )
+        service = OASTService(ctx, providers)
+        if args.sub in {"providers", "status"}:
+            result = service.capabilities()
+            if "generic" not in result:
+                result["generic"] = {"available": False, "detail": "NOT_CONFIGURED", "third_party": True}
+            result["burp_collaborator"] = {"available": False, "status": "BURP_COLLABORATOR_UNAVAILABLE"}
+            if args.sub == "status":
+                result["program_policy"] = {
+                    "out_of_band_testing": bool(ctx.engagement.roe.out_of_band_testing),
+                    "oob_test_forbidden": "oob_test" in ctx.engagement.roe.forbidden_actions,
+                }
+        elif args.sub == "create-session":
+            session = _bound_or_new_session(ctx, "researcher")
+            result = service.create_session(args.provider, session_id=session.id, expires_in=args.expires, approval_id=_parse_id(args.approval) if args.approval else None)
+            result.pop("provider_session_reference", None)
+        elif args.sub == "probes":
+            rows = ctx.db._conn.execute("SELECT p.* FROM oast_probe p JOIN oast_session s ON s.id=p.oast_session_id WHERE s.program=? ORDER BY p.id", (ctx.slug,)).fetchall()
+            result = [{key: row[key] for key in row.keys() if key != "correlation_token"} for row in rows]
+        elif args.sub == "poll": result = service.poll_probe(args.probe, wait_seconds=args.wait)
+        else: result = service.close_session(args.session)
+        _dump(result)
+    return 0
+
+
+def _learning_command(args) -> int:
+    from .learning import ProgramLearning
+    with _ctx(args.program) as ctx:
+        learning = ProgramLearning(ctx.db)
+        if args.sub == "reset":
+            _require_human_cli("reset program learning"); learning.reset(); result = {"reset": True}
+        else: result = learning.summary()
+        _dump(result)
+    return 0
+
+
+def _knowledge_search(args) -> int:
+    from .config import get_paths
+    from .knowledge_store import KnowledgeStore
+    store = KnowledgeStore(get_paths().cache_root / "security-knowledge.db")
+    try: _dump(store.search(args.query, categories=args.category, limit=args.limit))
+    finally: store.close()
+    return 0
+
+
+def _knowledge_import(args) -> int:
+    from .config import get_paths
+    from .knowledge_store import KnowledgeStore, OSVProvider
+    store = KnowledgeStore(get_paths().cache_root / "security-knowledge.db")
+    try:
+        if args.sub == "cwe-import": result = {"imported": len(store.import_cwe_json(args.file, source_version=args.version))}
+        elif args.sub == "advisory-sync": result = {"cached": len(store.sync_advisories(OSVProvider(), ecosystem=args.ecosystem, package=args.package, version=args.version))}
+        else:
+            document = json.loads(Path(args.file).read_text(encoding="utf-8")); items = document if isinstance(document, list) else [document]
+            result = {"imported": [store.import_report(source_id=str(item["id"]), title=str(item["title"]), summary=str(item.get("summary", "")), tags=list(item.get("tags", [])), source_url=str(item.get("source_url", ""))) for item in items]}
+        _dump(result)
+    finally: store.close()
     return 0
 
 
@@ -1580,6 +1749,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     acceptance = sp("acceptance", help="optional local-only acceptance workflows")
     acceptance_sub = acceptance.add_subparsers(dest="sub", required=True)
+    acceptance_sub.add_parser(
+        "capability-smoke",
+        help="run the deterministic localhost completion acceptance (no model or public network)",
+    )
     model_smoke = acceptance_sub.add_parser("model-smoke", help="run a real model-driven localhost hunt")
     model_smoke.add_argument("--runtime", choices=["claude", "codex"], default="claude")
     model_smoke.add_argument("--timeout", type=int, default=2400)
@@ -1592,6 +1765,9 @@ def build_parser() -> argparse.ArgumentParser:
         "recover-whitebox-model-smoke",
         help="apply an already-submitted independent review after a local smoke runtime exit",
     )
+    oast_smoke = acceptance_sub.add_parser("oast-smoke", help="explicit harmless real OAST connectivity smoke")
+    oast_smoke.add_argument("--provider", choices=["interactsh"], default="interactsh")
+    oast_smoke.add_argument("--server", default=""); oast_smoke.add_argument("--wait", type=int, default=60)
     whitebox_recover.add_argument("--program", required=True)
 
     # program
@@ -1754,6 +1930,11 @@ def build_parser() -> argparse.ArgumentParser:
     kp = ksub.add_parser("promote"); _add_program_arg(kp); kp.add_argument("--file", required=True)
     kc = ksub.add_parser("candidates")
     ks = ksub.add_parser("status")
+    ksearch = ksub.add_parser("search", help="FTS search local CWE/advisory/public-report knowledge")
+    ksearch.add_argument("query"); ksearch.add_argument("--category", action="append", default=[]); ksearch.add_argument("--limit", type=int, default=10)
+    kcwe = ksub.add_parser("cwe-import", help="import a user-downloaded official MITRE CWE JSON conversion"); kcwe.add_argument("file"); kcwe.add_argument("--version", required=True)
+    kadv = ksub.add_parser("advisory-sync", help="explicit OSV advisory lookup/cache"); kadv.add_argument("--ecosystem", required=True); kadv.add_argument("--package", required=True); kadv.add_argument("--version", required=True)
+    kreport = ksub.add_parser("report-import", help="import user-owned/public report JSON"); kreport.add_argument("file")
 
     # skills
     s = sp("skill", help="skills")
@@ -1913,11 +2094,48 @@ def build_parser() -> argparse.ArgumentParser:
     recon_changes = recon_sub.add_parser("changes", help="list run-to-run changes"); _add_program_arg(recon_changes); recon_changes.add_argument("--run", default=None); recon_changes.add_argument("--type", default=None); recon_changes.add_argument("--since", default=None); recon_changes.add_argument("--limit", type=int, default=500)
     recon_interesting = recon_sub.add_parser("interesting", help="rank meaningful research surfaces"); _add_program_arg(recon_interesting); recon_interesting.add_argument("--limit", type=int, default=20)
     recon_summary = recon_sub.add_parser("summary", help="compact AI-oriented recon summary"); _add_program_arg(recon_summary); recon_summary.add_argument("--limit", type=int, default=10)
+    recon_watch = recon_sub.add_parser("watch", help="persistent foreground recon watch")
+    _add_program_arg(recon_watch); recon_watch.add_argument("--profile", choices=["passive", "light", "standard", "deep"], default="passive")
+    recon_watch.add_argument("--interval", default="6h"); recon_watch.add_argument("--once", action="store_true")
+    recon_watch.add_argument("--max-results", type=int, default=200); recon_watch.add_argument("--timeout", type=int, default=120)
+
+    coverage = sp("coverage", help="observed attack-surface coverage")
+    coverage_sub = coverage.add_subparsers(dest="sub", required=True)
+    coverage_summary = coverage_sub.add_parser("summary"); _add_program_arg(coverage_summary)
+
+    request_cmd = sp("request", help="safe request replay")
+    request_sub = request_cmd.add_subparsers(dest="sub", required=True)
+    request_replay = request_sub.add_parser("replay"); _add_program_arg(request_replay)
+    request_replay.add_argument("request"); request_replay.add_argument("--mutation", action="append", default=[], help="JSON RequestMutation")
+    request_replay.add_argument("--auth", default=None)
+
+    response_cmd = sp("response", help="deterministic recorded-response comparison")
+    response_sub = response_cmd.add_subparsers(dest="sub", required=True)
+    response_diff = response_sub.add_parser("diff"); _add_program_arg(response_diff)
+    response_diff.add_argument("requests", nargs="+"); response_diff.add_argument("--ignore-json-path", action="append", default=[])
+
+    oast = sp("oast", help="bounded OAST provider/probe lifecycle")
+    oast_sub = oast.add_subparsers(dest="sub", required=True)
+    for name in ("providers", "status", "probes"):
+        item = oast_sub.add_parser(name); _add_program_arg(item)
+    oast_create = oast_sub.add_parser("create-session"); _add_program_arg(oast_create)
+    oast_create.add_argument("--provider", default="interactsh"); oast_create.add_argument("--server", default="")
+    oast_create.add_argument("--expires", type=int, default=1800); oast_create.add_argument("--approval", default=None)
+    oast_poll = oast_sub.add_parser("poll"); _add_program_arg(oast_poll); oast_poll.add_argument("probe", type=int); oast_poll.add_argument("--wait", type=int, default=0)
+    oast_close = oast_sub.add_parser("close"); _add_program_arg(oast_close); oast_close.add_argument("session", type=int)
+
+    learning = sp("learning", help="bounded program-local outcome learning")
+    learning_sub = learning.add_subparsers(dest="sub", required=True)
+    for name in ("summary", "reset"):
+        item = learning_sub.add_parser(name); _add_program_arg(item)
 
     auth = sp("auth", help="model-safe AuthContext status")
     auth_sub = auth.add_subparsers(dest="sub", required=True)
     auth_list = auth_sub.add_parser("list", help="show roles and credential availability, never secrets")
     _add_program_arg(auth_list)
+    auth_status = auth_sub.add_parser("status"); _add_program_arg(auth_status); auth_status.add_argument("--context", default="")
+    for name in ("login", "refresh", "invalidate"):
+        item = auth_sub.add_parser(name); _add_program_arg(item); item.add_argument("context")
 
     hk = sp("hook", help="(internal) lifecycle hook entry invoked by runtime configs")
     hk.add_argument(
@@ -1944,7 +2162,9 @@ def _dispatch(args) -> int:
         "doctor": cmd_doctor,
         "acceptance": {"model-smoke": _acceptance_model_smoke,
                        "whitebox-model-smoke": _acceptance_whitebox_model_smoke,
-                       "recover-whitebox-model-smoke": _acceptance_recover_whitebox_model_smoke},
+                       "recover-whitebox-model-smoke": _acceptance_recover_whitebox_model_smoke,
+                       "capability-smoke": _acceptance_capability_smoke,
+                       "oast-smoke": _acceptance_oast_smoke},
         "program": {
             "create": _program_create, "list": _program_list, "show": _program_show, "use": _program_use,
             "archive": lambda a: _program_status(a, "archived"), "activate": _program_activate,
@@ -1972,7 +2192,7 @@ def _dispatch(args) -> int:
             "reject": _finding_reject, "cvss": _finding_cvss,
         },
         "checkpoint": {"save": _checkpoint_save, "show": _checkpoint_show, "latest": _checkpoint_latest},
-        "knowledge": {"list": _knowledge_list, "promote": _knowledge_promote, "candidates": _knowledge_candidates, "status": _knowledge_status},
+        "knowledge": {"list": _knowledge_list, "promote": _knowledge_promote, "candidates": _knowledge_candidates, "status": _knowledge_status, "search": _knowledge_search, "cwe-import": _knowledge_import, "advisory-sync": _knowledge_import, "report-import": _knowledge_import},
         "approval": {
             "list": _approval_list, "show": _approval_show,
             "approve": lambda a: _approval_decide(a, "approved"),
@@ -2005,8 +2225,14 @@ def _dispatch(args) -> int:
             "endpoints": _recon_endpoints, "parameters": _recon_parameters,
             "technologies": _recon_technologies, "changes": _recon_changes,
             "interesting": _recon_interesting, "summary": _recon_summary,
+            "watch": _recon_watch,
         },
-        "auth": {"list": _auth_list},
+        "auth": {"list": _auth_list, "status": _auth_lifecycle, "login": _auth_lifecycle, "refresh": _auth_lifecycle, "invalidate": _auth_lifecycle},
+        "request": {"replay": _request_replay},
+        "response": {"diff": _response_compare},
+        "coverage": {"summary": _coverage_summary},
+        "oast": {"providers": _oast_command, "status": _oast_command, "create-session": _oast_command, "probes": _oast_command, "poll": _oast_command, "close": _oast_command},
+        "learning": {"summary": _learning_command, "reset": _learning_command},
         "hook": _hook,
     }
 

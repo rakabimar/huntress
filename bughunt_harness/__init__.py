@@ -19,4 +19,4 @@ __version__ = "0.3.0"
 #   v8 = source security models/symbols/invariants, run-scoped approvals,
 #        specialist handoffs, and lightweight agent/tool/skill telemetry
 #   v9 = executable specialist lifecycle and correlated tool invocation spans
-STATE_SCHEMA_VERSION = 9
+STATE_SCHEMA_VERSION = 10

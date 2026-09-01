@@ -45,3 +45,5 @@ Reject unreachable/test-only code, safe wrappers or centralized controls, config
 Stop on program/repository mismatch, ambiguous source provenance, version mismatch, cross-program access, secret exposure, or when progress requires running repository-controlled code. Static read-only analysis is AUTO; package install/build/test/workflow/project execution is not. ASK only through source execution policy in an isolated sandbox; never execute by default.
 
 Read references/expert-guide.md for the decision model and references/implementation-notes.md for tools/framework constraints.
+
+Report taint depth truthfully: LEVEL_0 co-location, LEVEL_1 local AST flow, LEVEL_2 Semgrep taint-confirmed, LEVEL_3 CodeQL interprocedural-confirmed, or UNKNOWN. JavaScript/TypeScript, Java/Kotlin, Go, and supported PHP use the same labels; never claim LEVEL_3 when CodeQL did not run.

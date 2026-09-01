@@ -45,3 +45,5 @@ Reject unreachable/test-only code, safe wrappers or centralized controls, config
 Stop on program/repository mismatch, ambiguous source provenance, version mismatch, cross-program access, secret exposure, or when progress requires running repository-controlled code. Static read-only analysis is AUTO; package install/build/test/workflow/project execution is not. ASK only through source execution policy in an isolated sandbox; never execute by default.
 
 Read references/expert-guide.md for the decision model and references/implementation-notes.md for tools/framework constraints.
+
+JavaScript secret extraction returns only candidate kind and fingerprint. Never auto-authenticate, reveal the candidate, or promote it without controlled reachability and impact evidence.

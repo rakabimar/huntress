@@ -47,3 +47,5 @@ Use `policy_preflight` before the single matrix-cell experiment and
 `send_authorized_http_request` for the controlled baseline/replay. Browser-only
 workflow observation may use Playwright, but authoritative API effects still go
 through the broker.
+
+Prefer `compare_authorized_request` over manually sending and comparing principal A/B requests. Keep the baseline object fixed and use structured replay for one identifier change.

@@ -38,3 +38,5 @@ Reject surface discovery alone, scanner warnings, insecure-looking configuration
 
 ## Stop conditions
 Stop on Scope/Policy denial, missing capability pack relevance, uncontrolled external effects, source execution without ASK/sandbox, credential use, production availability risk, persistence, or R3/R4 without approval.
+
+Use `analyze_js_artifact` for compact routes, WebSockets, GraphQL operations, source maps, and secret fingerprints. Candidate strings enter recon provenance and require ordinary reachability checks.

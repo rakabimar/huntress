@@ -181,11 +181,7 @@ def run_specialist_task(ctx, task_id: int, *, runtime: str = "claude") -> dict:
     task = ctx.db.get_specialist_task(task_id)
     if task["status"] != "PENDING":
         raise StateError(f"specialist task must be PENDING, is {task['status']}")
-    if any(
-        item["status"] == "RUNNING" and item["id"] != task_id
-        for item in ctx.db.list_specialist_tasks()
-    ):
-        raise StateError("specialist concurrency is limited to one running task per program")
+    max_parallel = int(getattr(getattr(getattr(ctx, "engagement", None), "autonomy", None), "max_parallel_specialists", 1))
     role = task["assigned_role"]
     if role not in SPECIALIST_ROLES:
         raise StateError(f"role {role!r} is not dispatchable as a specialist")
@@ -206,9 +202,12 @@ def run_specialist_task(ctx, task_id: int, *, runtime: str = "claude") -> dict:
     specialist = ctx.db.start_session(runtime, role, ctx.slug)
     config = _specialist_mcp_config(ctx, specialist.id, role, task_id)
     started = time.monotonic()
-    task = ctx.db.update_specialist_task(
-        task_id, status="RUNNING", claimed_session_id=specialist.id, runtime=runtime,
+    task = ctx.db.claim_specialist_task(
+        task_id, lease_owner=f"session:{specialist.id}", claimed_session_id=specialist.id,
+        lease_seconds=int(task.get("timeout_seconds") or 600) + 30,
+        max_parallel=max_parallel,
     )
+    task = ctx.db.update_specialist_task(task_id, status="RUNNING", runtime=runtime)
     turn = ctx.db.start_agent_turn(
         session_id=specialist.id, role=role, runtime=runtime,
         autonomy_run_id=task.get("autonomy_run_id"), specialist_task_id=task_id,

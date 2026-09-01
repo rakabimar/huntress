@@ -103,6 +103,7 @@ class BrokerResult:
     redirect_chain: list[dict] = field(default_factory=list)
     proxy: str | None = None
     error: str | None = None
+    session_secret_refs: dict[str, str] = field(default_factory=dict)
 
     def as_dict(self) -> dict:
         return {
@@ -116,6 +117,7 @@ class BrokerResult:
             "evidence_id": self.evidence_id, "request_id": self.request_id,
             "auth_context": self.auth_context, "account_role": self.account_role,
             "redirect_chain": self.redirect_chain, "proxy": self.proxy, "error": self.error,
+            "session_secret_refs": self.session_secret_refs,
         }
 
 
@@ -436,6 +438,11 @@ class RequestBroker:
         research_test_id: int | None = None, hypothesis_id: int | None = None,
         controlled_mutation: dict | None = None, baseline_evidence_id: str = "",
         burp_ref: str = "",
+        parent_request_id: int | None = None, root_request_id: int | None = None,
+        replay_depth: int = 0, mutation_summary: str = "",
+        secret_extract: dict[str, str] | None = None,
+        secret_store_names: dict[str, str] | None = None,
+        extra_secret_values: list[str] | None = None,
     ) -> BrokerResult:
         method = method.upper()
         if not self.active:
@@ -476,6 +483,7 @@ class RequestBroker:
         try:
             auth = self._resolve_auth_context(auth_context)
             req_headers, sensitive_names, secret_values = self._resolve_headers(headers, auth)
+            secret_values.extend(extra_secret_values or [])
         except (ValueError, NetworkSafetyError) as exc:
             return self._blocked(action, target, method, str(exc), agent_role, session_id)
 
@@ -604,6 +612,7 @@ class RequestBroker:
                     redirect_chain=redirect_chain, auth=auth, proxy=proxy,
                 )
             try:
+                request_started = time.perf_counter()
                 resp = requests.request(
                     current_method, current_url, headers=req_headers,
                     data=current_body, json=current_json, params=current_params,
@@ -626,6 +635,23 @@ class RequestBroker:
             except Exception:
                 text_body = ""
             exact_url = normalize_target(resp.url or current_url)
+            session_refs: dict[str, str] = {}
+            if secret_extract:
+                try:
+                    session_refs = self._extract_session_secrets(
+                        resp, secret_extract, secret_store_names or {},
+                    )
+                    secret_values.extend(
+                        value for value in (self.secrets.resolve(ref) for ref in session_refs.values())
+                        if value
+                    )
+                except (ValueError, KeyError, SecretError, json.JSONDecodeError) as exc:
+                    return self._blocked(
+                        action, exact_url, current_method,
+                        f"session credential extraction failed: {type(exc).__name__}",
+                        agent_role, session_id, redirect_chain=redirect_chain,
+                        auth=auth, proxy=proxy, status_code=resp.status_code,
+                    )
             safe_exact_url = redact_url(exact_url, secret_values=secret_values)
             evidence_id = self._persist_evidence(
                 method=current_method, url=exact_url, request_headers=req_headers,
@@ -645,10 +671,12 @@ class RequestBroker:
                     "headers": redact_headers(req_headers, sensitive_names),
                     "query_parameters": dict(parse_qsl(urlparse(safe_exact_url).query, keep_blank_values=True)),
                     "account_id": auth.account_id, "account_role": auth.role,
+                    "action": action,
                 },
                 response_metadata={
                     "status": resp.status_code, "headers": redact_headers(dict(resp.headers), sensitive_names),
                     "length": len(resp.content),
+                    "timing_ms": round((time.perf_counter() - request_started) * 1000, 3),
                 },
                 burp_ref=burp_ref,
                 body_hash=hashlib.sha256(
@@ -660,6 +688,8 @@ class RequestBroker:
                 ).hexdigest(),
                 evidence_ref=evidence_id, research_test_id=research_test_id,
                 hypothesis_id=hypothesis_id, controlled_mutation=controlled_mutation,
+                parent_request_id=parent_request_id, root_request_id=root_request_id,
+                replay_depth=replay_depth, mutation_summary=mutation_summary,
             )
             self._log(
                 agent_role, action, safe_exact_url, ALLOW,
@@ -691,6 +721,7 @@ class RequestBroker:
                         for entry in redirect_chain
                     ],
                     proxy=proxy,
+                    session_secret_refs=session_refs,
                 )
             if hop >= redirect_limit:
                 return self._blocked(
@@ -734,6 +765,29 @@ class RequestBroker:
                 current_method, current_body, current_json = "GET", None, None
 
         raise AssertionError("redirect loop exhausted unexpectedly")
+
+    def _extract_session_secrets(
+        self, response, selectors: dict[str, str], store_names: dict[str, str],
+    ) -> dict[str, str]:
+        """Extract credentials inside the broker and persist only secret refs."""
+        output: dict[str, str] = {}
+        parsed_json = None
+        for key, selector in selectors.items():
+            if selector.startswith("json:"):
+                if parsed_json is None:
+                    parsed_json = response.json()
+                current: Any = parsed_json
+                for segment in selector[5:].removeprefix("$.").split("."):
+                    current = current[segment]
+                value = str(current)
+            elif selector.startswith("cookie:"):
+                value = str(response.cookies.get(selector[7:]) or "")
+            else:
+                raise ValueError("session selector must use json: or cookie:")
+            if not value:
+                raise ValueError(f"empty extracted credential {key}")
+            output[key] = self.secrets.store_file_secret(store_names.get(key, f"session-{key}"), value)
+        return output
 
     def _blocked(
         self, action: str, target: str, method: str, reason: str,

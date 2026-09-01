@@ -41,3 +41,5 @@ Duplicate delivery returning 2xx with one state effect, documented retry/order t
 Stop on Scope/Policy denial, unknown authorization, missing controlled fixtures, third-party effects, or when validation needs R3/R4 without approval. High-volume, destructive, availability, workflow execution, and uncontrolled shared-user effects are denied.
 
 Tool choice and implementation notes are in references/implementation-notes.md.
+
+For callback validation, allocate one OAST probe per research test, send the webhook through the Broker, link its RequestRecord, and accept only exact correlated interactions. Third-party provider use is separately policy-gated.

@@ -26,7 +26,7 @@ CLAUDE_DIR = base.REPO_ROOT / ".claude"
 
 
 def _hook_cmd(event: str) -> str:
-    return f"{base.REPO_ROOT / 'harness'} hook {event}"
+    return f"./harness hook {event}"
 
 
 def _hook(match: str | None, event: str, timeout: int) -> dict:
@@ -124,7 +124,7 @@ def mcp_json() -> dict:
     return {
         "mcpServers": {
             "bughunt": {
-                "command": str(base.REPO_ROOT / "harness"),
+                "command": "./harness",
                 "args": ["mcp", "serve"],
             }
         }
@@ -192,11 +192,16 @@ def sync_skills() -> list[Path]:
     created: list[Path] = []
     for skill in base.list_skill_dirs():
         link = out_dir / skill.name
-        if link.exists() or link.is_symlink():
-            if link.is_symlink() or link.is_dir():
+        if link.is_symlink() or link.is_dir():
+            continue
+        if link.exists():
+            # Only a zero-byte regular file is an unambiguous interrupted
+            # harness-generated placeholder. Never overwrite user content.
+            if not link.is_file() or link.stat().st_size:
                 continue
+            link.unlink()
         try:
-            os.symlink(skill, link)
+            os.symlink(os.path.relpath(skill, out_dir), link)
         except OSError:
             import shutil
 

@@ -47,7 +47,13 @@ where = ["."]
 include = ["bughunt_harness*"]
 
 [tool.setuptools.package-data]
-bughunt_harness = ["data/*.txt"]
+bughunt_harness = [
+    "data/*.txt",
+    "data/**/*.yaml",
+    "data/**/*.yml",
+    "data/**/*.ql",
+    "data/**/*.md",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

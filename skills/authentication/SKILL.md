@@ -46,3 +46,5 @@ Read references/attack-surface.md for lifecycle matrices and multi-channel incon
 Use `policy_preflight` before any lifecycle mutation and the request broker for
 the minimal controlled exchange. Use Playwright only when browser transaction
 binding is itself under test; never expose token values to the browser model.
+
+Use lifecycle status/refresh tools for configured accounts. Do not handle usernames, passwords, refresh tokens, cookies, or extracted access tokens in model context.

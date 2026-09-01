@@ -38,6 +38,21 @@ _INTEGRATION_LOCAL_MODULES = {
 }
 
 
+@pytest.fixture(autouse=True)
+def _isolate_user_integration_config(monkeypatch, tmp_path):
+    """The deterministic suite must never inherit a developer Burp/OAST config."""
+    import bughunt_harness.config as config_module
+
+    previous = config_module._default_config
+    monkeypatch.setenv("BUGHUNT_HOME", str(tmp_path / "isolated-bughunt-home"))
+    monkeypatch.setenv("BUGHUNT_BURP_PROXY", "disabled")
+    config_module._default_config = None
+    try:
+        yield
+    finally:
+        config_module._default_config = previous
+
+
 def pytest_collection_modifyitems(items):
     """Attach one primary deterministic category to every collected test."""
     for item in items:

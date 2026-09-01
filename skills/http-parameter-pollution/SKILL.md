@@ -41,3 +41,5 @@ A single consistent documented first/last/array rule across all components, dupl
 Stop on Scope/Policy denial, unknown authorization, missing controlled fixtures, third-party effects, or when validation needs R3/R4 without approval. High-volume, destructive, availability, workflow execution, and uncontrolled shared-user effects are denied.
 
 Tool choice and implementation notes are in references/implementation-notes.md.
+
+Use structured query `ADD` to preserve duplicate parameters, one field at a time, then compare clustered responses. Do not reconstruct the raw request or spray parameter lists.

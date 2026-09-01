@@ -42,3 +42,5 @@ OS command injection happens when untrusted input reaches a shell or command int
 
 ## Example
 On http://example.test/tools/lookup, the `host` parameter is passed to the OS. A tester hypothesizes it is executed by a shell, predicts a 3-second delay from an injected marker, and sends `host=example.test; sleep 3` through the broker against localhost. The response returns after roughly 3 seconds versus a near-instant baseline, supporting the hypothesis without any destructive action.
+
+Use OAST only when in-band output and a safe timing discriminator are unavailable and ROE explicitly permits external callbacks. Exact probe correlation demonstrates a callback, not arbitrary command impact.

@@ -97,6 +97,8 @@ class FindingRecord:
     creator_session_id: int | None = None
     linkage_state: str = "complete"
     poc_path: str | None = None
+    dedup_classification: str = ""
+    potential_duplicate_of: int | None = None
 
 
 @dataclass
@@ -205,6 +207,10 @@ class RequestRecord:
     hypothesis_id: int | None = None
     controlled_mutation: dict = field(default_factory=dict)
     autonomy_run_id: int | None = None
+    parent_request_id: int | None = None
+    root_request_id: int | None = None
+    replay_depth: int = 0
+    mutation_summary: str = ""
 
 
 @dataclass

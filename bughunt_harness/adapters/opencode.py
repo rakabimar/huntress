@@ -22,7 +22,7 @@ def opencode_json() -> dict:
         "mcp": {
             "bughunt": {
                 "type": "local",
-                "command": [str(base.REPO_ROOT / "harness"), "mcp", "serve"],
+                "command": ["./harness", "mcp", "serve"],
                 "enabled": True,
             }
         },

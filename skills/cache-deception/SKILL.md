@@ -41,3 +41,5 @@ Browser/private cache, no shared hit, cache key varies on auth/cookie, origin se
 Stop on Scope/Policy denial, unknown authorization, missing controlled fixtures, third-party effects, or when validation needs R3/R4 without approval. High-volume, destructive, availability, workflow execution, and uncontrolled shared-user effects are denied.
 
 Tool choice and implementation notes are in references/implementation-notes.md.
+
+Use request replay for a single path/header change and `compare_responses` for cache/status/body/header behavior. Preserve one-variable causality.

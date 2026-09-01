@@ -5,7 +5,8 @@ recursive-include skills *.md *.yaml *.yml *.json
 recursive-include policies *.yaml *.yml
 recursive-include profiles *.yaml *.yml
 recursive-include knowledge *.yaml *.yml *.md
-recursive-include tests *.py *.json *.yaml *.yml *.md *.js *.ts
+recursive-include bughunt_harness/data *.txt *.yaml *.yml *.ql *.md
+recursive-include tests *.py *.json *.yaml *.yml *.md *.js *.ts *.java *.go
 include tests/fixtures/whitebox/secret-test/fixture.env
 recursive-include scripts *.sh
 prune .git

@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "bughunt": {
-      "command": "/mnt/c/Users/Lenovo/Documents/Pacil/PERKODINGAN/Cyber_Security/bug_bounty/harness",
+      "command": "./harness",
       "args": [
         "mcp",
         "serve"
